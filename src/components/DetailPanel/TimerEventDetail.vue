@@ -1,26 +1,22 @@
 <template>
-    <div :data-clazz="model.clazz">
+    <div :data-clazz="model.clazz" class="nodeDetail">
         <div class="panelTitle">{{i18n['timerEvent']}}</div>
         <div class="panelBody">
             <DefaultDetail :model="model" :onChange="onChange" :readOnly="readOnly" />
             <div class="panelRow">
-                <div>{{i18n['timerEvent.cycle']}}：</div>
-                <el-input style="width:90%; font-size:12px"
-                          type="textarea"
-                          :rows="4"
-                          :disabled="readOnly"
-                          :value="model.cycle"
-                          @input="(value) => {onChange('cycle', value)}" />
-            </div>
-            <div class="panelRow">
-                <div>{{i18n['timerEvent.duration']}}：</div>
-                <el-input style="width:90%; font-size:12px"
-                          type="textarea"
-                          :rows="4"
-                          :disabled="readOnly"
-                          :value="model.duration"
-                          @input="(value) => {onChange('duration', value)}" />
-            </div>
+        <div>name：</div>
+        <el-input style="width:90%; font-size:12px"
+                  :disabled="readOnly"
+                  :value="model.label"
+                  @input="(value) => {onChange('label', value)}"/>
+      </div>
+      <div class="panelRow">
+        <div>type：</div>
+        <el-input style="width:90%; font-size:12px"
+                  :disabled="true"
+                  value=parallel
+                  />
+      </div>
         </div>
     </div>
 </template>
@@ -47,3 +43,39 @@
     },
   }
 </script>
+<style lang="scss" >
+// 新增mailTaskDetail样式
+.nodeDetail {
+  .panelTitle {
+    background: #f5f7fa;
+    border-bottom: 1px solid #e4e7ed;
+    font-weight: bold;
+  }
+
+  .panelBody {
+    padding: 10px;
+
+    .panelRow {
+      align-items: center;
+      padding: 10px 12px;
+
+    }
+    // 调整输入框的样式
+     .el-input {
+      flex-grow: 1;
+      margin-top: 8px;
+    }
+    // 调整折叠面板的样式
+    .el-collapse {
+      margin-top: 12px;
+      .el-collapse-item {
+        .el-collapse-item__header {
+          font-weight: bold;
+        }
+      }
+    }
+  }
+}
+
+
+</style>

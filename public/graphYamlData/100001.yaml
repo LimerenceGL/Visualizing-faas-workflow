@@ -1,0 +1,68 @@
+global_input: {}
+steps:
+  - name: rand
+    type: task
+    run: testrand
+    runtime: 1
+    mem_usage: 0.25
+    scale: 2
+    requirement:
+      mem_req: 0.25
+      gpu: false
+    outputs:
+      rand_resulta:
+        type: pass
+        size: 8
+      rand_resultb:
+        type: pass
+        size: 8
+    next:
+      - switchcal
+  - name: switchcal
+    type: switch
+    conditions:
+      - ${rand.rand_resulta} < ${rand.rand_resultb}
+      - default
+    next:
+      - invalid
+      - sqrt
+  - name: invalid
+    type: task
+    run: testinvalid
+    runtime: 1
+    mem_usage: 0.25
+    scale: 2
+    requirement:
+      mem_req: 0.25
+      gpu: false
+    outputs:
+      invalidresult:
+        type: pass
+        size: 8
+  - name: sqrt
+    type: task
+    run: testsqrt
+    runtime: 1
+    mem_usage: 0.25
+    scale: 2
+    requirement:
+      mem_req: 0.25
+      gpu: false
+    inputs:
+      numa:
+        type: pass
+        source: rand.rand_resulta
+        size: 8
+      numb:
+        type: pass
+        source: rand.rand_resultb
+        size: 8
+    outputs:
+      sqrt_result:
+        type: pass
+        size: 8
+global_output:
+  numb:
+    type: pass
+    source: rand.rand_resultb
+    size: '8'

@@ -210,7 +210,12 @@ export function exportImg(canvasPanel,filename,createFile = true) {
   return data
 }
 
-function downloadFile(data, type, filename) {
+// function exportYaml(json,filename,createFile=true){
+//
+// }
+
+
+export function downloadFile(data, type, filename) {
   const blob = new Blob([data], { type });
   let link = document.createElement('a');
   if (link.download !== undefined) {

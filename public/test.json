@@ -1,0 +1,23 @@
+{
+  "id": "1234567",
+  "state": "success",
+  "steps": [
+    {
+      "name": "rand",
+      "condition": "Finished"
+    },
+    {
+      "name": " switchcal",
+      "condition": " Finished"
+    },
+    {
+      "name": " invalid",
+      "condition": " Finished"
+    },
+    {
+      "name": " sqrt",
+      "condition": "NotStarted"
+    }
+  ],
+  "result": "test success"
+}
