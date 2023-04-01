@@ -2,10 +2,11 @@
   <div class="root">
     <el-row class="position-relative">
   <ToolbarPanel ref="toolbar"/>
-  <IoPanel class="floating-io-panel" @changeData="updateData" :graph="this.graph"></IoPanel>
+  <IoPanel class="floating-io-panel" @changeData="updateData" :graph="this.graph" @updateWorkflowName="updateWorkflowName"></IoPanel>
+
 </el-row>
     <div class="display-flex">
-      <ItemPanel ref="addItemPanel" class="itemPanel" :height="height"/>
+      <ItemPanel ref="addItemPanel" class="itemPanel" :height="height" :workflowName="workflowName"/>
 
       <div ref="canvas" class="canvasPanel"></div>
       <DetailPanel ref="detailPanel"
@@ -101,7 +102,7 @@ export default {
       },
       graph: null,
       cmdPlugin: null,
-
+       workflowName: "",
     };
   },
   watch: {
@@ -257,7 +258,9 @@ export default {
     updateData(newdata) {
       this.data = newdata
     },
-
+     updateWorkflowName(newName) {
+    this.workflowName = newName;
+  },
 
   },
   destroyed() {

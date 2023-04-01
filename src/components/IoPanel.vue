@@ -3,7 +3,7 @@
   <div id="IoPanel">
 
     <el-button size="small" style="float:right;margin-top:6px;margin-right:6px;"
-               @click="updateYAML">上传YAML<i class="el-icon-upload el-icon--right"></i>
+               @click="saveWorkflow">保存工作流<i class="el-icon-upload el-icon--right"></i>
     </el-button>
     <el-button size="small" style="float:right;margin-top:6px;margin-right:6px;"
                @click="()=>{graph.saveYAML()}">导出YAML
@@ -17,6 +17,14 @@
     <el-button size="small" style="float:right;margin-top:6px;margin-right:6px;"
                @click="pollingRequests">部署工作流
     </el-button>
+    <el-input
+        placeholder="请输入工作流名称"
+        size="small"
+        v-model="workflowName"
+        @input="onWorkflowNameChange"
+        style="float:right;margin-top:6px;margin-right:6px;"
+    >
+    </el-input>
     <input id="datafile" type="file" accept=".yml, .yaml, .json"/><br/>
 
   </div>
@@ -24,6 +32,7 @@
 
 <script>
 import axios from "axios";
+import {Message} from "element-ui";
 
 export default {
   name: "IoPanel",
@@ -31,10 +40,11 @@ export default {
     return {
       modalVisible: false,
       lang: "zh",
-      layout: true,
+
       jsonFromFile: {"nodes": [], "edges": [], "combos": [], "groups": []},
       RealtimeData: null,
       workflowId: null,
+      workflowName: "",
 
     }
   },
@@ -56,7 +66,7 @@ export default {
         } else if (fileType === "json") {
           this.jsonFromFile = JSON.parse(content)
         }
-        this.$emit("changeData",this.jsonFromFile)
+        this.$emit("changeData", this.jsonFromFile)
 
       });
       reader.readAsText(file);
@@ -122,16 +132,70 @@ export default {
         return false
       }
     },
+    onWorkflowNameChange() {
+      this.$emit("updateWorkflowName", this.workflowName);
+    },
+    async saveWorkflow() {
+      if (!this.workflowName) {
+        Message({
+          message: "请输入工作流名称",
+          type: "warning",
+          duration: 3000
+        });
+        return;
+      }
+      const filename = `http://localhost:3000/localWorkflow/${this.workflowName}.json`;
+      try {
+        // 检查文件是否已经存在
+        const response = await axios.head(filename);
+        if (response.status === 200) {
+          if (confirm("文件已存在，是否替换？")) {
+            // 保存文件
+            await this.saveWorkflowToFile(filename);
+          }
+        }
+      } catch (error) {
+        if (error.response && error.response.status === 404) {
+          // 文件不存在，直接保存
+          await this.saveWorkflowToFile(filename);
+        } else {
+          console.error("保存工作流出错:", error);
+        }
+      }
+    },
+    async saveWorkflowToFile(filename) {
+      try {
+        const workflowData = this.graph.save(); // 使用 graph 中的 saveJSON 方法获取工作流数据
+        const jsonData = JSON.stringify(workflowData); // 将工作流数据转换为 JSON 字符串
+        const formData = new FormData();
+        const file = new File([jsonData], `${this.workflowName}.json`, {type: "application/json"});
+        formData.append("file", file);
+        await axios.put(filename, formData, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }); // 发送 PUT 请求保存工作流数据
+        Message({
+          message: "工作流已保存",
+          type: "success",
+          duration: 3000
+        });
 
-    updateLayout(newValue) {
-      this.layout = newValue;
+      } catch (error) {
+        console.error("保存文件出错:", error);
+        Message({
+          message: "保存工作流出错，请稍后重试",
+          type: "error",
+          duration: 3000
+        });
+      }
     },
   },
-  props:["graph"]
+  props: ["graph"]
 }
 </script>
 
-<style >
+<style>
 #datafile {
   display: none;
 }

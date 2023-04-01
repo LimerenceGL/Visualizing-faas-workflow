@@ -41,6 +41,10 @@ export default {
       type: Number,
       default: 800,
     },
+     workflowName: {
+    type: String,
+    default: "",
+  },
   },
   data() {
     return {
@@ -51,6 +55,7 @@ export default {
 
     };
   },
+
 }
 </script>
 
