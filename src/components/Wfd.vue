@@ -1,10 +1,11 @@
 <template>
   <div class="root">
     <el-row class="position-relative">
-  <ToolbarPanel ref="toolbar"/>
-  <IoPanel class="floating-io-panel" @changeData="updateData" :graph="this.graph" @updateWorkflowName="updateWorkflowName"></IoPanel>
+      <ToolbarPanel ref="toolbar"/>
+      <IoPanel class="floating-io-panel" @changeData="updateData" :graph="this.graph"
+               @updateWorkflowName="updateWorkflowName" :workflowName="workflowName"></IoPanel>
 
-</el-row>
+    </el-row>
     <div class="display-flex">
       <ItemPanel ref="addItemPanel" class="itemPanel" :height="height" :workflowName="workflowName"/>
 
@@ -15,15 +16,16 @@
                    :model="selectedModel"
                    :readOnly=false
                    :next-object="nextObject"
-                   :onChange="(key,val)=>{onItemCfgChange(key,val)}"/>
+                   :onChange="(key,val)=>{onItemCfgChange(key,val)}"
+                   v-show="Object.keys(selectedModel).length > 0"/>
 
     </div>
 
-<!--    <div v-if="this.graph">{{ this.graph.save() }}</div>-->
+    <!--    <div v-if="this.graph">{{ this.graph.save() }}</div>-->
 
     <div>
     </div>
-
+    {{ this.$route.params }}
   </div>
 </template>
 <script>
@@ -85,7 +87,10 @@ export default {
       type: Object,
       default: () => ({})
     },
-
+    workflowName: {
+      type: String,
+      default: ""
+    }
 
   },
   data() {
@@ -102,7 +107,7 @@ export default {
       },
       graph: null,
       cmdPlugin: null,
-       workflowName: "",
+      localData: this.data,
     };
   },
   watch: {
@@ -121,6 +126,12 @@ export default {
           }
         }
       }
+    },
+    localData: {
+      handler(newVal) {
+        this.$emit('update:data', newVal);
+      },
+      deep: true,
     },
   },
   methods: {
@@ -159,6 +170,9 @@ export default {
         graph.changeSize(page.offsetWidth, height);
       };
       window.addEventListener("resize", this.resizeFunc);
+      this.graph.on('canvas:click', () => {
+        this.selectedModel = {};
+      });
     },
     onItemCfgChange(key, value) {
       const items = this.graph.get('selectedItems');
@@ -256,11 +270,11 @@ export default {
     },
 
     updateData(newdata) {
-      this.data = newdata
+      this.localData = newdata;
     },
-     updateWorkflowName(newName) {
-    this.workflowName = newName;
-  },
+    updateWorkflowName(newName) {
+      this.workflowName = newName;
+    },
 
   },
   destroyed() {
@@ -288,13 +302,13 @@ export default {
     this.graph = new G6.Graph({
       plugins: plugins,
       container: this.$refs['canvas'],
-      height: this.height*0.8,
+      height: this.height * 0.8,
       width: width,
       modes: {
         default: ['drag-canvas', 'clickSelected'],
         //'drag-canvas':拖动画布
         view: [],
-        edit: ['hoverNodeActived', 'hoverAnchorActived', 'dragNode', 'dragEdge',
+        edit: ['hoverNodeActived', 'hoverAnchorActived', 'dragNode', 'dragEdge', 'drag-canvas',
           'dragPanelItemAddNode', 'clickSelected', 'deleteItem', 'itemAlign', 'dragPoint', 'brush-select'],
       },
       defaultEdge: {
@@ -319,12 +333,14 @@ export default {
       this.graph.setMode('view');
     else
       this.graph.setMode(this.mode);
-    this.graph.data(this.initShape(this.data));
+    this.graph.data(this.initShape(this.localData));
     this.graph.render();
-    if (this.isView && this.data && this.data.nodes) {
+    if (this.isView && this.localData && this.localData.nodes) {
       this.graph.fitView(5)
     }
     this.initEvents();
+
+
   }
 };
 </script>
@@ -335,10 +351,12 @@ export default {
   background-color: #fff;
   display: block;
 }
+
 .display-flex {
   display: flex;
   flex-wrap: nowrap;
 }
+
 .itemPanel {
   flex: 0 0 auto;
   float: left;
@@ -346,24 +364,28 @@ export default {
   background-color: #fff;
   border-bottom: 1px solid #E9E9E9;
 }
+
 .position-relative {
   position: relative;
 }
+
 .floating-io-panel {
   position: absolute;
   top: 0;
   right: 0;
   z-index: 1000;
 }
+
 .canvasPanel {
   flex: 0 0 auto;
   float: left;
   width: 65%; // 根据需要调整宽度
   background-color: #fff;
   border-bottom: 1px solid #E9E9E9;
-   margin-left: 2px;
+  margin-left: 2px;
 }
-.detailPanel{
+
+.detailPanel {
   flex: 0 0 auto;
   float: left;
   width: 20%; // 根据需要调整宽度

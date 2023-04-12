@@ -1,9 +1,9 @@
 <template>
     <div class="detailPanel" :style="{'height':height+'px'}">
       <el-scrollbar style="height:100%">
-      <ProcessDetail v-if="model.clazz === 'process'" :model="model" :onChange="onChange" :readOnly="readOnly"
-                     :categorys="categorys"/>
-      <EndEventDetail v-else-if="model.clazz === 'end'" :model="model" :onChange="onChange" :readOnly="readOnly"/>
+<!--      <ProcessDetail v-if="model.clazz === 'process'" :model="model" :onChange="onChange" :readOnly="readOnly"-->
+<!--                     :categorys="categorys"/>-->
+      <EndEventDetail v-if="model.clazz === 'end'" :model="model" :onChange="onChange" :readOnly="readOnly"/>
       <StartEventDetail v-else-if="model.clazz === 'start'" :model="model" :onChange="onChange" :readOnly="readOnly"/>
       <GatewayDetail v-else-if="model.clazz === 'gateway' || model.clazz === 'exclusiveGateway' || model.clazz === 'parallelGateway' || model.clazz === 'inclusiveGateway'"
           :model="model" :onChange="onChange" :readOnly="readOnly" :nextObject="nextObject"/>
@@ -70,7 +70,7 @@ export default {
     font-family: 'Helvetica Neue', Arial, sans-serif;
     flex: 0 0 auto;
     float: left;
-    width: 20%;
+    width: 100%;
     border-right: 1px solid #E9E9E9;
     border-bottom: 1px solid #E9E9E9;
     box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1); // 添加阴影

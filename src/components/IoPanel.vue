@@ -2,9 +2,7 @@
 
   <div id="IoPanel">
 
-    <el-button size="small" style="float:right;margin-top:6px;margin-right:6px;"
-               @click="saveWorkflow">保存工作流<i class="el-icon-upload el-icon--right"></i>
-    </el-button>
+
     <el-button size="small" style="float:right;margin-top:6px;margin-right:6px;"
                @click="()=>{graph.saveYAML()}">导出YAML
     </el-button>
@@ -15,16 +13,46 @@
                @click="clickFile">导入工作流
     </el-button>
     <el-button size="small" style="float:right;margin-top:6px;margin-right:6px;"
-               @click="pollingRequests">部署工作流
+               @click="saveWorkflow">保存工作流<i class="el-icon-upload el-icon--right"></i>
     </el-button>
-    <el-input
-        placeholder="请输入工作流名称"
-        size="small"
-        v-model="workflowName"
-        @input="onWorkflowNameChange"
-        style="float:right;margin-top:6px;margin-right:6px;"
+    <!--    <el-button size="small" style="float:right;margin-top:6px;margin-right:6px;"-->
+    <!--               @click="pollingRequests">部署工作流-->
+    <!--    </el-button>-->
+    <!--    <el-input-->
+    <!--        placeholder="请输入工作流名称"-->
+    <!--        size="small"-->
+    <!--        v-model="workflowName"-->
+    <!--        @input="onWorkflowNameChange"-->
+    <!--        style="float:right;margin-top:6px;margin-right:6px;;width:150px;"-->
+    <!--    >-->
+    <!--    </el-input>-->
+    <el-link
+        :underline="false"
+        style="float:right;margin-top:12px;margin-right:20px;"
+        @click="openDialog"
     >
-    </el-input>
+      <span style="font-weight: bold">{{ workflowName || "未命名" }}</span>
+    </el-link>
+
+    <!-- 添加弹框，用于编辑工作流名称 -->
+    <el-dialog
+        title="编辑工作流名称"
+        :visible.sync="showDialog"
+        width="30%"
+        @close="showDialog = false"
+        :modal="false"
+    >
+      <el-input
+          ref="workflowNameInput"
+          placeholder="请输入工作流名称"
+          v-model="tempWorkflowName"
+          @keyup.enter.native="saveWorkflowName"
+      ></el-input>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="showDialog = false">取消</el-button>
+        <el-button type="primary" @click="saveWorkflowName">确定</el-button>
+      </span>
+    </el-dialog>
     <input id="datafile" type="file" accept=".yml, .yaml, .json"/><br/>
 
   </div>
@@ -43,8 +71,10 @@ export default {
 
       jsonFromFile: {"nodes": [], "edges": [], "combos": [], "groups": []},
       RealtimeData: null,
-      workflowId: null,
-      workflowName: "",
+
+
+      showDialog: false,
+      tempWorkflowName: "",
 
     }
   },
@@ -119,22 +149,11 @@ export default {
       }
       return graph
     },
-    updateYAML() {
-      alert("方法未实现")
-    },
-    getDeployMessage(info) {
-      //获取部署信息
-      if (info['state'] === 1) {
-        this.workflowId = info['id']
-        return true
-      } else if (info['state'] === 2 || info['state'] === 3) {
-        alert(info['message'])
-        return false
-      }
-    },
-    onWorkflowNameChange() {
-      this.$emit("updateWorkflowName", this.workflowName);
-    },
+
+
+    // onWorkflowNameChange() {
+    //   this.$emit("updateWorkflowName", this.workflowName);
+    // },
     async saveWorkflow() {
       if (!this.workflowName) {
         Message({
@@ -165,11 +184,12 @@ export default {
     },
     async saveWorkflowToFile(filename) {
       try {
-        const workflowData = this.graph.save(); // 使用 graph 中的 saveJSON 方法获取工作流数据
+        const workflowData = this.graph.save(); // 使用 graph 中的 save 方法获取工作流数据
         const jsonData = JSON.stringify(workflowData); // 将工作流数据转换为 JSON 字符串
         const formData = new FormData();
         const file = new File([jsonData], `${this.workflowName}.json`, {type: "application/json"});
         formData.append("file", file);
+        console.log("Saving workflow to:", filename);
         await axios.put(filename, formData, {
           headers: {
             "Content-Type": "multipart/form-data",
@@ -190,8 +210,36 @@ export default {
         });
       }
     },
+    openDialog() {
+      this.tempWorkflowName = this.workflowName;
+      this.showDialog = true;
+      this.$nextTick(() => {
+        // 使用 $refs 获取 el-input 组件并调用 focus() 方法
+        this.$refs.workflowNameInput.focus();
+      });
+    },
+
+    saveWorkflowName() {
+      this.workflowName = this.tempWorkflowName;
+      this.onWorkflowNameChange();
+      this.showDialog = false;
+    },
+
+    onWorkflowNameChange() {
+      this.$emit("updateWorkflowName", this.workflowName);
+    },
   },
-  props: ["graph"]
+  props: {
+    graph: {
+      type: Object,
+      default: () => ({nodes: [], edges: []})
+    },
+    workflowName: {
+      type: String,
+      default: ""
+    }
+  }
+
 }
 </script>
 

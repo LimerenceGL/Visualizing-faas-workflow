@@ -6,7 +6,7 @@
             <div class="panelRow">
         <label style="width: 40%;display: inline-block">工作流输出: </label>
         <label style="width: 15%;display: inline-block">{{
-            this.model.outputCount ? this.model.outputCount : this.onChange('outputCount', 1)
+            this.model.outputCount >= 0 ? this.model.outputCount : this.onChange('outputCount', 0)
           }} </label>
         <el-button icon="el-icon-minus" size="mini" @click="minus_output" circle></el-button>
         <el-button icon="el-icon-plus" size="mini" @click="plus_output" circle></el-button>

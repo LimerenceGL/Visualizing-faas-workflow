@@ -16,17 +16,26 @@
     </el-row>
     <el-row>
 
-
     </el-row>
     <el-row>
-<div ref="canvas" class="canvasPanel" @wheel="onWheel"></div>
+      <div ref="canvas" class="canvasPanel" @wheel="onWheel"></div>
+      <div class="detail-panel-container">
+        <!-- Add your custom div here -->
+        <div >
+          <process-panel :model="model"></process-panel>
+        </div>
 
-      <DetailPanel ref="detailPanel"
-                   :height="height"
-                   :model="selectedModel"
-                   :readOnly=true
-                   :next-object="nextObject"/>
+        <DetailPanel ref="detailPanel"
+                     :height="height*0.7"
+                     :model="selectedModel"
+                     :readOnly=true
+                     :next-object="nextObject"
+                     v-show="Object.keys(selectedModel).length > 0"/>
+      </div>
+
+
     </el-row>
+    {{ selectedModel }}
     <!--    <div v-if="this.graph">{{ this.graph.save() }}</div>-->
 
 
@@ -40,6 +49,7 @@ import G6 from '@antv/g6/lib';
 import {getShapeName} from '../util/clazz'
 import CanvasPanel from '../plugins/canvasPanel'
 import DetailPanel from '../components/DetailPanel'
+import processPanel from "./processPanel";
 import registerShape from '../shape'
 import registerBehavior from '../behavior'
 import i18n from '../locales'
@@ -51,6 +61,7 @@ export default {
   name: "workflowDetail.vue",
   components: {
     DetailPanel,
+    processPanel
   },
   provide() {
     return {
@@ -88,15 +99,10 @@ export default {
       },
       data: [],
       selectedModel: {},
-      processModel: {
-        id: '',
-        name: '',
-        clazz: 'process',
-
-
-      },
       graph: null,
       cmdPlugin: null,
+      model:{}
+
 
     };
   },
@@ -137,7 +143,7 @@ export default {
           }
           this.selectedModel = {...item.getModel()};
         } else {
-          this.selectedModel = this.processModel;
+          this.selectedModel = {};
         }
       });
 
@@ -148,6 +154,9 @@ export default {
         graph.changeSize(page.offsetWidth, height);
       };
       window.addEventListener("resize", this.resizeFunc);
+      this.graph.on('canvas:click', () => {
+        this.selectedModel = {};
+      });
     },
     getNodeInSubProcess(itemId) {
       const subProcess = this.graph.find('node', (node) => {
@@ -261,15 +270,26 @@ export default {
     this.graph.render();
     this.graph.fitView(5);
     this.initEvents();
-  }
+  },
+
+
 }
 </script>
 
 
 <style scoped>
 .detail-container {
-  margin: 20px;
+
 }
+
+.detail-panel-container {
+  display: flex;
+  flex-direction: column;
+  width: 30%;
+}
+
+
+
 
 .detail-container {
   width: 100%;

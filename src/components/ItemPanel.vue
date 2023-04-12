@@ -28,6 +28,7 @@
           <div>task</div>
         </el-collapse-item>
       </el-collapse>
+
 <!--    </el-scrollbar>-->
   </div>
 
@@ -122,7 +123,7 @@ export default {
     .el-collapse-item {
       > div[role=tab] > div {
         padding: 8px;
-        border: 1px solid #E9E9E9;
+        //border: 1px solid #E9E9E9;
         border-left: 0;
         border-radius: 5px;
         transition: all 0.3s ease;

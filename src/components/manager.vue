@@ -1,84 +1,99 @@
 <template>
   <div class="manager-container">
     <div class="search-container">
-  <div class="search-title">搜索</div>
-  <div class="search-item">
-    <el-input
-      placeholder="名称"
-      v-model="searchName"
-      clearable
-      @clear="filterData"
-      @input="filterData"
-    ></el-input>
-  </div>
-  <div class="search-item">
-    <el-input
-      placeholder="ID"
-      v-model="searchId"
-      clearable
-      @clear="filterData"
-      @input="filterData"
-    ></el-input>
-  </div>
-  <div class="search-item">
-    <el-select v-model="searchStatus" placeholder="状态" @change="filterData">
-      <el-option label="all" value=""></el-option>
-      <el-option label="finished" value="finished"></el-option>
-      <el-option label="error" value="error"></el-option>
-      <el-option label="running" value="running"></el-option>
-    </el-select>
-  </div>
-  <div class="search-item">
-    <el-input
-      placeholder="节点数"
-      v-model="searchNodeCount"
-      clearable
-      @clear="filterData"
-      @input="filterData"
-    ></el-input>
-  </div>
-</div>
-       <el-table
-      :data="displayedData"
-      style="width: 100%"
+      <div class="search-title">搜索</div>
+      <div class="search-item">
+        <el-input
+            placeholder="名称"
+            v-model="searchName"
+            clearable
+            @clear="filterData"
+            @input="filterData"
+        ></el-input>
+      </div>
 
-      class="custom-table"
+    </div>
+    <el-table
+        :data="displayedData"
+        style="width: 100%"
+
+        class="custom-table"
     >
-      <el-table-column prop="name" label="名称"></el-table-column>
-      <el-table-column prop="id" label="ID"></el-table-column>
-      <el-table-column label="状态">
-  <template slot-scope="scope">
-    <span :class="{
-      'status-finished': scope.row.status === 'finished',
-      'status-error': scope.row.status === 'error',
-      'status-running': scope.row.status === 'running'
-    }">{{ scope.row.status }}</span>
-  </template>
-</el-table-column>
-      <el-table-column prop="nodeCount" label="节点数"></el-table-column>
-          <el-table-column label="更新时间">
+      <el-table-column label="名称">
         <template slot-scope="scope">
-          {{ timeDifference(scope.row.update) }}
+          {{ scope.row.name.replace(".json", "") }}
         </template>
       </el-table-column>
-      <el-table-column label="操作">
+      <el-table-column label="修改时间">
+        <template slot-scope="scope">
+          {{ showTime(scope.row.lastModified) }}
+        </template>
+      </el-table-column>
+      <el-table-column label="标记">
+        <template slot-scope="scope">
+          {{ showTag(scope.row.tag) }}
+        </template>
+      </el-table-column>
+      <el-table-column label="编辑">
         <template slot-scope="scope">
           <el-button
-            type="info" plain
-            @click="goToDetail(scope.row.id)"
+              plain
+              @click="editFile(scope.row)"
           >
-            查看详情
+            编辑
+          </el-button>
+        </template>
+      </el-table-column>
+      <el-table-column label="删除">
+        <template slot-scope="scope">
+          <el-button
+              plain
+              @click="deleteFile(scope.row)"
+          >
+            删除
+          </el-button>
+        </template>
+      </el-table-column>
+      <el-table-column label="上传">
+        <template slot-scope="scope">
+          <el-button
+              plain
+              @click="uploadFile(scope.row)"
+          >
+            上传
+          </el-button>
+        </template>
+      </el-table-column>
+      <el-table-column label="部署">
+        <template slot-scope="scope">
+          <el-button
+              plain
+              @click="deployFile(scope.row)"
+          >
+            部署
+          </el-button>
+        </template>
+      </el-table-column>
+
+
+      <el-table-column label="查看">
+        <template slot-scope="scope">
+          <el-button
+              plain
+              @click="goToDetail(scope.row.id)"
+          >
+            查看实例
           </el-button>
         </template>
       </el-table-column>
     </el-table>
-     <el-pagination
-      :current-page.sync="currentPage"
-      :page-size="pageSize"
-      :total="filteredData.length"
-      layout="prev, pager, next"
-      @current-change="handlePageChange"
-      class="pagination"
+    <el-pagination
+        :current-page.sync="currentPage"
+        :page-size="pageSize"
+        :total="filteredData.length"
+        layout="prev, pager, next"
+        @current-change="handlePageChange"
+        class="pagination"
     ></el-pagination>
   </div>
 </template>
@@ -93,11 +108,12 @@ export default {
       searchId: "",
       searchStatus: "",
       searchNodeCount: "",
-       pageSize: 9,
+      pageSize: 9,
       currentPage: 1,
+      base_url: 'http://localhost:3000',
     };
   },
-   computed: {
+  computed: {
     timeDifference() {
       return (timestamp) => {
         if (!timestamp) return "未知";
@@ -148,20 +164,91 @@ export default {
         return matchName && matchId && matchStatus && matchNodeCount;
       });
     },
-
-     handlePageChange(page) {
+    showTime(dateString) {
+      const date = new Date(dateString);
+      const year = date.getFullYear();
+      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+      const day = date.getDate().toString().padStart(2, '0');
+      const hours = date.getHours().toString().padStart(2, '0');
+      const minutes = date.getMinutes().toString().padStart(2, '0');
+      const seconds = date.getSeconds().toString().padStart(2, '0');
+      return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+    },
+    showTag(tag) {
+      if (tag === 'not_uploaded') {
+        return "未上传"
+      } else if (tag === 'uploaded') {
+        return "已上传"
+      } else if (tag == "deployed") {
+        return "已部署"
+      }
+    },
+    handlePageChange(page) {
       this.currentPage = page;
+    },
+    async deleteFile(file) {
+      await fetch(this.base_url + `/public/localWorkflow/${file.name}?id=${file.id}`, {
+        method: 'DELETE',
+      });
+      this.fetchFileList();
+    },
+
+    async uploadFile(file) {
+      const updatedFile = {...file, tag: 'uploaded'};
+      await this.updateFile(updatedFile);
+      setTimeout(() => {
+        this.fetchFileList();
+      }, 2000);
+    },
+
+    async deployFile(file) {
+      const updatedFile = {...file, tag: 'deployed'};
+      await this.updateFile(updatedFile);
+      setTimeout(() => {
+        this.fetchFileList();
+      }, 2000);
+    },
+
+    async updateFile(file) {
+      const formData = new FormData();
+      formData.append('id', file.id);
+      formData.append('tag', file.tag);
+
+      await fetch(this.base_url + `/public/localWorkflow/${file.name}`, {
+        method: 'PUT',
+        body: formData,
+      });
+    },
+
+    async fetchFileList() {
+      try {
+        const response = await fetch(this.base_url + '/public/localWorkflow');
+        const data = await response.json();
+        this.tableData = data;
+        this.filteredData = data;
+      } catch (error) {
+        console.error('Error fetching file list:', error);
+      }
+    },
+    async editFile(file) {
+      try {
+        const response = await fetch(`${this.base_url}/public/localWorkflow/${file.name}`);
+        const data = await response.json();
+        this.$router.push({
+          path: '/arrange',
+          query: {
+            data: JSON.stringify(data),
+            filename: file.name.replace(".json",""),
+          },
+        });
+      } catch (error) {
+        console.error('Error fetching file content:', error);
+      }
     },
 
   },
   mounted() {
-    // 从json文件中获取数据
-    fetch('/data.json')
-        .then((response) => response.json()
-        ).then((data) => {
-      this.tableData = data;
-      this.filteredData = data;
-    });
+    this.fetchFileList();
   }
   ,
 };
@@ -183,14 +270,13 @@ export default {
   font-weight: bold;
   margin-left: 5%;
   margin-right: 5%;
-  margin-bottom: 13px;
+  margin-bottom: 10px; /* 将 margin-bottom 设置为 10px 以使其与 search-item 保持一致 */
 }
 
 .search-item {
   flex: 0 0 calc(15% - 15px);
   margin-bottom: 10px;
   background-color: #ffffff;
-
   border-radius: 5px;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
@@ -198,38 +284,41 @@ export default {
 .search-item:not(:last-child) {
   margin-right: 15px;
 }
+
 .manager-container {
-margin: 20px;
+  margin: 20px;
 }
+
 .custom-table {
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
   border-radius: 5px;
   overflow: hidden;
 }
+
 .pagination {
   margin-top: 20px;
   display: flex;
   justify-content: center;
 }
 
-  /* 修改表格单元格文字样式 */
-  ::v-deep .el-table__cell {
-    font-size: 14px;
-    font-weight: 500;
-    color: #333;
-    line-height: 1.5;
-  }
+/* 修改表格单元格文字样式 */
+::v-deep .el-table__cell {
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+  line-height: 1.5;
+}
 
-  /* 根据状态设置文字颜色 */
-  .status-finished {
-    color: #4CAF50; /* 柔和的绿色 */
-  }
+/* 根据状态设置文字颜色 */
+.status-finished {
+  color: #4CAF50; /* 柔和的绿色 */
+}
 
-  .status-error {
-    color: #F44336; /* 柔和的红色 */
-  }
+.status-error {
+  color: #F44336; /* 柔和的红色 */
+}
 
-  .status-running {
-    color: #FFC107; /* 柔和的黄色 */
-  }
+.status-running {
+  color: #FFC107; /* 柔和的黄色 */
+}
 </style>

@@ -1,49 +1,29 @@
 <template>
   <div :data-clazz="model.clazz">
-    <div class="panelTitle">工作流执行状态</div>
+    <div class="panelTitle">工作流信息</div>
     <div class="panelBody">
-<!--      <DefaultDetail :model="model" :onChange="onChange" :readOnly="readOnly"/>-->
-      <div class="panelRow" >
-        <br><br><br>
+      <!-- 工作流名称 -->
+      <div class="workflow-info">
+        <div class="workflow-name">
+          <span>工作流名称：</span>
+          <span>{{ model.workflowName || "workflow1" }}</span>
+        </div>
+
+        <!-- 工作流ID -->
+        <div class="workflow-id">
+          <span>ID：</span>
+          <span>{{ model.id || "100000" }}</span>
+        </div>
+
+        <!-- 工作流执行状态 -->
+        <div class="workflow-status">
+          <span>执行状态：</span>
+          <span class="status-completed">{{ status }}</span>
+        </div>
       </div>
-      <div class="panelRow" >
-<!--        <el-radio-button  v-model="status" label="未执行"  > </el-radio-button>-->
-        <el-checkbox v-model="status" disabled>未执行</el-checkbox>
-      </div>
-      <div class="panelRow">
-<!--        <el-radio-button v-model="status" label="正在执行"  ></el-radio-button>-->
-        <el-checkbox v-model="status" disabled>正在执行</el-checkbox>
-      </div>
-<!--<br><br><br>-->
-      <div class="panelRow">
-<!--        <el-radio-button v-model="status" label="执行完成" type="success" ></el-radio-button>-->
-                <el-checkbox v-model="checked">执行完成</el-checkbox>
-
-      </div>
-
-
-      <!--            <div class="panelRow">-->
-      <!--                <div>-->
-      <!--                    {{i18n['process.dataObjs']}}：-->
-      <!--                    <el-button :disabled="readOnly" size="mini" @click="()=>{}">{{i18n['tooltip.edit']}}</el-button>-->
-      <!--                </div>-->
-
-      <!--            </div>-->
-      <!--            <div class="panelRow">-->
-      <!--                <div>-->
-      <!--                    {{i18n['process.signalDefs']}}：-->
-      <!--                    <el-button :disabled="readOnly" size="mini" @click="()=>{}">{{i18n['tooltip.edit']}}</el-button>-->
-      <!--                </div>-->
-
-      <!--            </div>-->
-      <!--            <div class="panelRow">-->
-      <!--                <div>-->
-      <!--                    {{i18n['process.messageDefs']}}：-->
-      <!--                    <el-button :disabled="readOnly" size="mini" @click="()=>{}">{{i18n['tooltip.edit']}}</el-button>-->
-      <!--                </div>-->
-
-      <!--            </div>-->
     </div>
+
+
   </div>
 </template>
 <script>
@@ -75,8 +55,8 @@ export default {
   },
   data() {
     return {
-      status:'执行完成',
-      checked:false
+      status: '执行完成',
+      checked: false
     }
   },
 
@@ -121,3 +101,36 @@ export default {
   }
 }
 </script>
+
+<style scoped>
+.panelTitle {
+  font-size: 16px;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+.panelBody {
+  font-size: 14px;
+}
+
+.workflow-info {
+  display: inline-block;
+}
+
+.workflow-name,
+.workflow-id,
+.workflow-status {
+  margin-bottom: 15px;
+  text-align: left;
+
+}
+
+.separator {
+  border-top: 1px solid #ccc;
+  margin: 5px 0;
+}
+
+.status-completed {
+  color: green;
+}
+</style>

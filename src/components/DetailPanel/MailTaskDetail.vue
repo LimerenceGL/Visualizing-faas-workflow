@@ -135,7 +135,7 @@
       <div class="panelRow">
         <label style="width: 20%;display: inline-block">输出: </label>
         <label style="width: 15%;display: inline-block">{{
-            this.model.outputCount ? this.model.outputCount : this.onChange('outputCount', 1)
+            this.model.outputCount >= 0 ? this.model.outputCount : this.onChange('outputCount', 0)
           }} </label>
         <el-button icon="el-icon-minus" size="mini" @click="minus_output" circle></el-button>
         <el-button icon="el-icon-plus" size="mini" @click="plus_output" circle></el-button>
@@ -247,7 +247,7 @@ export default {
       }
     },
     minus_output() {
-      if (this.model.inputCount > 0) {
+      if (this.model.outputCount > 0) {
         //与outputti有关的属性全部删除
         for (var props of Object.keys(this.model)) {
           if (props.includes("output" + this.model.outputCount)) {
