@@ -1,8 +1,7 @@
 <template>
     <div class="detailPanel" :style="{'height':height+'px'}">
       <el-scrollbar style="height:100%">
-      <ProcessDetail :model="model" :onChange="onChange" :readOnly="readOnly"
-                     :categorys="categorys"/>
+      <ProcessDetail :model="model"/>
 
       </el-scrollbar>
     </div>

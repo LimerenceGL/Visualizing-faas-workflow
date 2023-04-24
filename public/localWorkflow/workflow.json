@@ -1,0 +1,273 @@
+{
+  "nodes": [
+    {
+      "shape": "start-node",
+      "id": "startNode",
+      "label": "",
+      "clazz": "start",
+      "style": {},
+      "size": [
+        30,
+        30
+      ],
+      "depth": 0,
+      "x": 200,
+      "y": 35,
+      "inputCount": 0
+    },
+    {
+      "shape": "mail-task-node",
+      "run": "testrand",
+      "runtime": 1,
+      "mem_usage": 0.25,
+      "scale": 2,
+      "id": "rand",
+      "clazz": "mailTask",
+      "label": "rand",
+      "hideIcon": true,
+      "output1name": "rand_resulta",
+      "output1task": "pass",
+      "output1size": "8",
+      "output2name": "rand_resultb",
+      "output2task": "pass",
+      "output2size": "8",
+      "outputCount": 2,
+      "reqmem_req": "0.25",
+      "reqgpu": "false",
+      "style": {},
+      "size": [
+        75,
+        44
+      ],
+      "depth": 0,
+      "x": 200,
+      "y": 132,
+      "inputCount": 0
+    },
+    {
+      "shape": "exclusive-gateway-node",
+      "id": "switchcal",
+      "clazz": "exclusiveGateway",
+      "label": "switchcal",
+      "hideIcon": true,
+      "conditionsinvalid": "${rand.rand_resulta} < ${rand.rand_resultb}",
+      "conditionssqrt": "default",
+      "style": {},
+      "size": [
+        40,
+        40
+      ],
+      "depth": 0,
+      "x": 200,
+      "y": 234
+    },
+    {
+      "shape": "mail-task-node",
+      "run": "testinvalid",
+      "runtime": 1,
+      "mem_usage": 0.25,
+      "scale": 2,
+      "id": "invalid",
+      "clazz": "mailTask",
+      "label": "invalid",
+      "hideIcon": true,
+      "output1name": "invalidresult",
+      "output1task": "pass",
+      "output1size": "8",
+      "outputCount": 1,
+      "reqmem_req": "0.25",
+      "reqgpu": "false",
+      "style": {},
+      "size": [
+        75,
+        44
+      ],
+      "depth": 0,
+      "x": 87.5,
+      "y": 336
+    },
+    {
+      "shape": "mail-task-node",
+      "run": "testsqrt",
+      "runtime": 1,
+      "mem_usage": 0.25,
+      "scale": 2,
+      "id": "sqrt",
+      "clazz": "mailTask",
+      "label": "sqrt",
+      "hideIcon": true,
+      "input1name": "numa",
+      "input1task": "pass",
+      "input1source": "rand.rand_resulta",
+      "input1size": "8",
+      "input2name": "numb",
+      "input2task": "pass",
+      "input2source": "rand.rand_resultb",
+      "input2size": "8",
+      "inputCount": 2,
+      "output1name": "sqrt_result",
+      "output1task": "pass",
+      "output1size": "8",
+      "outputCount": 1,
+      "reqmem_req": "0.25",
+      "reqgpu": "false",
+      "style": {},
+      "size": [
+        75,
+        44
+      ],
+      "depth": 0,
+      "x": 312.5,
+      "y": 336
+    },
+    {
+      "shape": "end-node",
+      "id": "endNode",
+      "label": "",
+      "clazz": "end",
+      "output1name": "numb",
+      "output1task": "pass",
+      "output1source": "rand.rand_resultb",
+      "output1size": "8",
+      "outputCount": 1,
+      "style": {},
+      "size": [
+        30,
+        30
+      ],
+      "depth": 0,
+      "x": 200,
+      "y": 433
+    }
+  ],
+  "edges": [
+    {
+      "source": "startNode",
+      "target": "rand",
+      "clazz": "flow",
+      "shape": "flow-polyline-round",
+      "id": "flow1",
+      "style": {},
+      "startPoint": {
+        "x": 200,
+        "y": 50.5,
+        "index": 3,
+        "anchorIndex": 3
+      },
+      "endPoint": {
+        "x": 200,
+        "y": 109.5,
+        "index": 0,
+        "anchorIndex": 0
+      },
+      "depth": 0
+    },
+    {
+      "source": "rand",
+      "target": "switchcal",
+      "clazz": "flow",
+      "shape": "flow-polyline-round",
+      "id": "flow2",
+      "style": {},
+      "startPoint": {
+        "x": 200,
+        "y": 154.5,
+        "index": 2,
+        "anchorIndex": 2
+      },
+      "endPoint": {
+        "x": 200,
+        "y": 215.5,
+        "index": 0,
+        "anchorIndex": 0
+      },
+      "depth": 0
+    },
+    {
+      "source": "switchcal",
+      "target": "invalid",
+      "clazz": "flow",
+      "shape": "flow-polyline-round",
+      "id": "flow3",
+      "style": {},
+      "startPoint": {
+        "x": 181.5,
+        "y": 234,
+        "index": 3,
+        "anchorIndex": 3
+      },
+      "endPoint": {
+        "x": 87.5,
+        "y": 313.5,
+        "index": 0,
+        "anchorIndex": 0
+      },
+      "depth": 0
+    },
+    {
+      "source": "switchcal",
+      "target": "sqrt",
+      "clazz": "flow",
+      "shape": "flow-polyline-round",
+      "id": "flow4",
+      "style": {},
+      "startPoint": {
+        "x": 218.5,
+        "y": 234,
+        "index": 1,
+        "anchorIndex": 1
+      },
+      "endPoint": {
+        "x": 312.5,
+        "y": 313.5,
+        "index": 0,
+        "anchorIndex": 0
+      },
+      "depth": 0
+    },
+    {
+      "source": "invalid",
+      "target": "endNode",
+      "clazz": "flow",
+      "shape": "flow-polyline-round",
+      "id": "flow5",
+      "style": {},
+      "startPoint": {
+        "x": 125.5,
+        "y": 336,
+        "index": 1,
+        "anchorIndex": 1
+      },
+      "endPoint": {
+        "x": 184.5,
+        "y": 433,
+        "index": 2,
+        "anchorIndex": 2
+      },
+      "depth": 0
+    },
+    {
+      "source": "sqrt",
+      "target": "endNode",
+      "clazz": "flow",
+      "shape": "flow-polyline-round",
+      "id": "flow6",
+      "style": {},
+      "startPoint": {
+        "x": 274.5,
+        "y": 336,
+        "index": 3,
+        "anchorIndex": 3
+      },
+      "endPoint": {
+        "x": 215.5,
+        "y": 433,
+        "index": 3,
+        "anchorIndex": 3
+      },
+      "depth": 0
+    }
+  ],
+  "combos": [],
+  "groups": []
+}

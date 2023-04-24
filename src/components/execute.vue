@@ -1,16 +1,12 @@
 <template>
   <div class="execute-container">
+
     <div class="search-container">
-      <div class="search-title">搜索</div>
-      <div class="search-item">
-        <el-input
-            placeholder="名称"
-            v-model="searchName"
-            clearable
-            @clear="filterData"
-            @input="filterData"
-        ></el-input>
+      <div>
+        <span>{{ workflow_name }}</span>
       </div>
+      <div class="search-title">搜索</div>
+
       <div class="search-item">
         <el-input
             placeholder="ID"
@@ -24,43 +20,49 @@
         <el-select v-model="searchStatus" placeholder="状态" @change="filterData">
           <el-option label="all" value=""></el-option>
           <el-option label="finished" value="finished"></el-option>
-          <el-option label="error" value="error"></el-option>
+          <el-option label="failed" value="failed"></el-option>
           <el-option label="running" value="running"></el-option>
         </el-select>
       </div>
       <div class="search-item">
-        <el-input
-            placeholder="节点数"
-            v-model="searchNodeCount"
-            clearable
-            @clear="filterData"
-            @input="filterData"
-        ></el-input>
+        <el-date-picker
+            v-model="searchStartTime"
+            type="datetime"
+            placeholder="开始时间"
+            value-format="yyyy-MM-dd HH:mm:ss"
+            @change="filterData"
+        ></el-date-picker>
       </div>
+      <div class="search-item">
+        <el-date-picker
+            v-model="searchEndTime"
+            type="datetime"
+            placeholder="结束时间"
+            value-format="yyyy-MM-dd HH:mm:ss"
+            @change="filterData"
+        ></el-date-picker>
+      </div>
+          <el-button size="small"
+               @click="back">返回
+    </el-button>
     </div>
     <el-table
         :data="displayedData"
         style="width: 100%"
-
         class="custom-table"
     >
-      <el-table-column prop="name" label="名称"></el-table-column>
       <el-table-column prop="id" label="ID"></el-table-column>
       <el-table-column label="状态">
         <template slot-scope="scope">
-    <span :class="{
-      'status-finished': scope.row.status === 'finished',
-      'status-error': scope.row.status === 'error',
-      'status-running': scope.row.status === 'running'
-    }">{{ scope.row.status }}</span>
+          <span :class="{
+            'status-finished': scope.row.status === 'finished',
+            'status-failed': scope.row.status === 'failed',
+            'status-running': scope.row.status === 'running'
+          }">{{ scope.row.status }}</span>
         </template>
       </el-table-column>
-      <el-table-column prop="nodeCount" label="节点数"></el-table-column>
-      <el-table-column label="更新时间">
-        <template slot-scope="scope">
-          {{ timeDifference(scope.row.update) }}
-        </template>
-      </el-table-column>
+      <el-table-column prop="start_time" label="开始时间"></el-table-column>
+      <el-table-column prop="end_time" label="结束时间"></el-table-column>
       <el-table-column label="操作">
         <template slot-scope="scope">
           <el-button
@@ -71,6 +73,7 @@
           </el-button>
         </template>
       </el-table-column>
+
     </el-table>
     <el-pagination
         :current-page.sync="currentPage"
@@ -87,38 +90,20 @@ export default {
   name: "Execute",
   data() {
     return {
+      workflow_name: "",
       tableData: [],
       filteredData: [],
       searchName: "",
       searchId: "",
       searchStatus: "",
-      searchNodeCount: "",
+      searchStartTime: "",
+      searchEndTime: "",
       pageSize: 9,
       currentPage: 1,
+      base_url: 'http://localhost:3000'
     };
   },
   computed: {
-    timeDifference() {
-      return (timestamp) => {
-        if (!timestamp) return "未知";
-        const now = Date.now();
-        const diff = now - timestamp;
-        const minute = 60 * 1000;
-        const hour = 60 * minute;
-        const day = 24 * hour;
-        if (diff < minute) {
-          return Math.floor(diff / 1000) + "秒前";
-        } else if (diff < hour) {
-          return Math.floor(diff / minute) + "分钟前";
-        } else if (diff < day) {
-          return Math.floor(diff / hour) + "小时前";
-        } else if (diff < 10 * day) {
-          return Math.floor(diff / day) + "天前";
-        } else {
-          return "10天以上";
-        }
-      };
-    },
     displayedData() {
       const start = (this.currentPage - 1) * this.pageSize;
       const end = start + this.pageSize;
@@ -131,41 +116,65 @@ export default {
     goToDetail(id) {
       this.$router.push(`/detail/${id}`);
     },
-    // 根据状态返回对应的文本
-    tableStatusFormatter(status) {
-      console.log(status)
-      return status
+    back() {
+      this.$router.go(-1)
     },
     // 过滤数据
     filterData() {
       this.filteredData = this.tableData.filter((item) => {
-        const matchName = this.searchName ? item.name.includes(this.searchName) : true;
+
         const matchId = this.searchId ? item.id.includes(this.searchId) : true;
         const matchStatus = this.searchStatus ? item.status === this.searchStatus : true;
-        const matchNodeCount = this.searchNodeCount
-            ? item.nodeCount.toString().includes(this.searchNodeCount)
-            : true;
-        return matchName && matchId && matchStatus && matchNodeCount;
+
+        let matchStartTime = true;
+        if (this.searchStartTime) {
+          const searchStartTime = new Date(this.searchStartTime).getTime();
+          const itemStartTime = new Date(item.start_time).getTime();
+          matchStartTime = itemStartTime >= searchStartTime;
+        }
+
+        let matchEndTime = true;
+        if (this.searchEndTime) {
+          const searchEndTime = new Date(this.searchEndTime).getTime();
+          const itemEndTime = item.end_time ? new Date(item.end_time).getTime() : null;
+          matchEndTime = itemEndTime && itemEndTime <= searchEndTime;
+        }
+
+        return matchName && matchId && matchStatus && matchStartTime && matchEndTime;
       });
     },
+    fetchData() {
+      const name = this.$route.query.name;
+      this.workflow_name = name;
 
+      console.log(name)
+      // 使用 fetch 获取 API 数据
+      fetch(`${this.base_url}/api/workflow_instances?name=${name}`)
+          .then((response) => response.json())
+          .then((data) => {
+            this.tableData = data.instances;
+            this.filteredData = data.instances;
+          });
+    },
     handlePageChange(page) {
       this.currentPage = page;
     },
 
   },
   mounted() {
+    // this.fetchData();
     // 从json文件中获取数据
     fetch('/data.json')
         .then((response) => response.json()
         ).then((data) => {
-      this.tableData = data;
-      this.filteredData = data;
+      this.workflow_name = data.workflow_name;
+      this.tableData = data.instances;
+      this.filteredData = data.instances;
     });
   }
-  ,
 };
 </script>
+
 <style scoped>
 
 .search-container {
@@ -230,11 +239,23 @@ export default {
   color: #4CAF50; /* 柔和的绿色 */
 }
 
-.status-error {
+.status-failed {
   color: #F44336; /* 柔和的红色 */
 }
 
 .status-running {
   color: #FFC107; /* 柔和的黄色 */
 }
+.back-button {
+  background-color: #409eff;
+  color: #fff;
+  border-radius: 4px;
+  padding: 8px 12px;
+  font-size: 14px;
+  cursor: pointer;
+  margin: 20px 0;
+  display: inline-block;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
 </style>

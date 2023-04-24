@@ -16,7 +16,6 @@
     <el-table
         :data="displayedData"
         style="width: 100%"
-
         class="custom-table"
     >
       <el-table-column label="名称">
@@ -38,6 +37,7 @@
         <template slot-scope="scope">
           <el-button
               plain
+              :disabled="scope.row.tag === 'deployed'"
               @click="editFile(scope.row)"
           >
             编辑
@@ -48,26 +48,19 @@
         <template slot-scope="scope">
           <el-button
               plain
+              :disabled="scope.row.tag === 'deployed'"
               @click="deleteFile(scope.row)"
           >
             删除
           </el-button>
         </template>
       </el-table-column>
-      <el-table-column label="上传">
-        <template slot-scope="scope">
-          <el-button
-              plain
-              @click="uploadFile(scope.row)"
-          >
-            上传
-          </el-button>
-        </template>
-      </el-table-column>
+
       <el-table-column label="部署">
         <template slot-scope="scope">
           <el-button
               plain
+              :disabled="scope.row.tag === 'deployed'"
               @click="deployFile(scope.row)"
           >
             部署
@@ -75,12 +68,34 @@
         </template>
       </el-table-column>
 
+      <el-table-column label="卸载">
+        <template slot-scope="scope">
+          <el-button
+              plain
+              :disabled="scope.row.tag === 'undeployed'"
+              @click="undeployFile(scope.row)"
+          >
+            卸载
+          </el-button>
+        </template>
+      </el-table-column>
 
+      <el-table-column label="调用">
+        <template slot-scope="scope">
+          <el-button
+              plain
+              :disabled="scope.row.tag !== 'deployed'"
+              @click="invokeWorkflow(scope.row)"
+          >
+            调用
+          </el-button>
+        </template>
+      </el-table-column>
       <el-table-column label="查看">
         <template slot-scope="scope">
           <el-button
               plain
-              @click="goToDetail(scope.row.id)"
+              @click="goToDetail(scope.row.name)"
           >
             查看实例
           </el-button>
@@ -98,10 +113,13 @@
   </div>
 </template>
 <script>
+import {downloadYAML} from "../util/yamlGenerator";
+
 export default {
   name: "Manager",
   data() {
     return {
+      edgeflow_base_url: '', // 后续填写实际的后端URL
       tableData: [],
       filteredData: [],
       searchName: "",
@@ -143,10 +161,20 @@ export default {
   },
   methods: {
 
+    // // 跳转到详情页
+    // goToDetail(id) {
+    //   this.$router.push(`/detail/${id}`);
+    // },
     // 跳转到详情页
-    goToDetail(id) {
-      this.$router.push(`/detail/${id}`);
+    goToDetail(name) {
+      this.$router.push({
+        path: `/execute`,
+        query: {
+          name: name.replace(".json", ""),
+        },
+      });
     },
+
     // 根据状态返回对应的文本
     tableStatusFormatter(status) {
       console.log(status)
@@ -175,10 +203,8 @@ export default {
       return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
     },
     showTag(tag) {
-      if (tag === 'not_uploaded') {
-        return "未上传"
-      } else if (tag === 'uploaded') {
-        return "已上传"
+      if (tag === 'undeployed') {
+        return "未部署"
       } else if (tag == "deployed") {
         return "已部署"
       }
@@ -193,22 +219,91 @@ export default {
       this.fetchFileList();
     },
 
-    async uploadFile(file) {
-      const updatedFile = {...file, tag: 'uploaded'};
-      await this.updateFile(updatedFile);
-      setTimeout(() => {
-        this.fetchFileList();
-      }, 2000);
-    },
 
     async deployFile(file) {
-      const updatedFile = {...file, tag: 'deployed'};
-      await this.updateFile(updatedFile);
-      setTimeout(() => {
-        this.fetchFileList();
-      }, 2000);
+      const response = await fetch(`${this.base_url}/public/localWorkflow/${file.name}`);
+      const deployJsonData = await response.json();
+      const deployYamlData = downloadYAML(deployJsonData, false)
+
+      try {
+        const workflowName = file.name.replace(/\.yaml$/, ''); // 去掉.yaml后缀作为workflowName
+        const deployResponse = await fetch(`${this.edgeflow_base_url}/workflow/deploy/${workflowName}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+           body: new FormData().append('file', new Blob([deployYamlData], {type: 'application/x-yaml'}), file.name),
+        });
+
+        if (deployResponse.ok) {
+          const updatedFile = {...file, tag: 'deployed'};
+          await this.updateFile(updatedFile);
+          setTimeout(() => {
+            this.fetchFileList();
+          }, 2000);
+        } else {
+          const errorData = await deployResponse.json();
+          this.$message.error(`部署失败: ${errorData.error.message}`);
+        }
+      } catch (error) {
+        console.error('Error deploying workflow:', error);
+        this.$message.error('部署请求失败');
+      }
     },
 
+    async undeployFile(file) {
+      try {
+        const undeployResponse = await fetch(`${this.edgeflow_base_url}/undeploy`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({workflow_name: file.name}),
+        });
+
+        if (undeployResponse.ok) {
+          const updatedFile = {...file, tag: 'undeployed'};
+          await this.updateFile(updatedFile);
+          setTimeout(() => {
+            this.fetchFileList();
+          }, 2000);
+        } else {
+          const errorData = await undeployResponse.json();
+          this.$message.error(`卸载失败: ${errorData.error.message}`);
+        }
+      } catch (error) {
+        console.error('Error undeploying workflow:', error);
+        this.$message.error('卸载请求失败');
+      }
+    },
+
+    async invokeWorkflow(file) {
+      if (file.tag !== 'deployed') {
+        this.$message.warning('只有已部署的工作流才可以调用');
+        return;
+      }
+
+      try {
+        const response = await fetch(`${this.edgeflow_base_url}/invoke`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({workflow_name: file.name}),
+        });
+
+        if (response.ok) {
+          const responseData = await response.json();
+          this.$message.success(`工作流已成功调用, 实例ID: ${responseData.instance_id}`);
+        } else {
+          const errorData = await response.json();
+          this.$message.error(`调用失败: ${errorData.error.message}`);
+        }
+      } catch (error) {
+        console.error('Error invoking workflow:', error);
+        this.$message.error('调用请求失败');
+      }
+    },
     async updateFile(file) {
       const formData = new FormData();
       formData.append('id', file.id);
@@ -224,12 +319,17 @@ export default {
       try {
         const response = await fetch(this.base_url + '/public/localWorkflow');
         const data = await response.json();
+        // 按照 lastModified 进行降序排序
+        data.sort((a, b) => {
+          return new Date(b.lastModified) - new Date(a.lastModified);
+        });
         this.tableData = data;
         this.filteredData = data;
       } catch (error) {
         console.error('Error fetching file list:', error);
       }
     },
+
     async editFile(file) {
       try {
         const response = await fetch(`${this.base_url}/public/localWorkflow/${file.name}`);
@@ -238,7 +338,7 @@ export default {
           path: '/arrange',
           query: {
             data: JSON.stringify(data),
-            filename: file.name.replace(".json",""),
+            filename: file.name.replace(".json", ""),
           },
         });
       } catch (error) {

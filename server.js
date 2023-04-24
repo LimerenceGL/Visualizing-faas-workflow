@@ -73,7 +73,7 @@ app.put('/localWorkflow/:filename', upload.single('file'), async (req, res) => {
         await updateIndexJson(path.join(__dirname, 'public', 'localWorkflow'), 'add', {
             name: req.params.filename,
             lastModified: new Date(),
-            tag: 'not_uploaded',
+            tag: 'undeployed',
         });
         res.sendStatus(200);
     } catch (err) {

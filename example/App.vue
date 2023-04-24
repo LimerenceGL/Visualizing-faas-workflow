@@ -6,11 +6,11 @@
         <navagation></navagation>
       </el-col>
       <el-col :span="21">
+        <router-view name="execute"></router-view>
+        <router-view name="manager"></router-view>
+        <router-view name="workflowDetail"></router-view>
+        <router-view name="elementui"></router-view>
         <keep-alive>
-          <router-view name="execute"></router-view>
-          <router-view name="manager"></router-view>
-          <router-view name="workflowDetail"></router-view>
-          <router-view name="elementui"></router-view>
           <router-view name="Wfd" ref="wfd" :height="containerHeight" :lang="lang" :data="this.jsonFromFile"
                        :layout="layout" @update-layout="updateLayout" @update:data="updateDataFromChild"
                        :workflowName="workflowName"></router-view>
@@ -27,7 +27,7 @@
     <input id="datafile" type="file" accept=".yml, .yaml, .json"/><br/>
 
 
-    {{ RealtimeData }}
+<!--    {{ RealtimeData }}-->
 
   </div>
 </template>

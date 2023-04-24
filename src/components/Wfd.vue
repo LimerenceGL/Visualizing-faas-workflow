@@ -1,9 +1,11 @@
 <template>
   <div class="root">
     <el-row class="position-relative">
+
       <ToolbarPanel ref="toolbar"/>
+
       <IoPanel class="floating-io-panel" @changeData="updateData" :graph="this.graph"
-               @updateWorkflowName="updateWorkflowName" :workflowName="workflowName"></IoPanel>
+               @updateWorkflowName="updateWorkflowName" :workflowName="workflowName" @resetGraph="resetGraph"></IoPanel>
 
     </el-row>
     <div class="display-flex">
@@ -25,7 +27,7 @@
 
     <div>
     </div>
-    {{ this.$route.params }}
+
   </div>
 </template>
 <script>
@@ -111,7 +113,7 @@ export default {
     };
   },
   watch: {
-    data(newData, oldData) {
+    localData(newData, oldData) {
       if (oldData !== newData) {
         if (this.graph) {
           this.graph.changeData(this.initShape(newData));
@@ -127,14 +129,15 @@ export default {
         }
       }
     },
-    localData: {
-      handler(newVal) {
-        this.$emit('update:data', newVal);
-      },
-      deep: true,
-    },
+    data(newData){
+      this.localData=newData
+    }
+
   },
   methods: {
+    resetGraph() {
+      this.localData = {nodes: [], edges: [],combos:[],groups:[]};
+    },
 
     initShape(data) {
       if (data && data.nodes) {

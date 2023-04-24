@@ -1,23 +1,24 @@
 {
-  "id": "1234567",
-  "state": "success",
-  "steps": [
+  "instance_id": "instance1",
+  "workflow_name": "my_workflow",
+  "status": "error",
+  "result": "sqrt函数运行失败",
+  "nodes": [
     {
       "name": "rand",
-      "condition": "Finished"
+      "status": "finished",
     },
     {
-      "name": " switchcal",
-      "condition": " Finished"
+      "name": "switchcal",
+      "status": "running",
     },
     {
-      "name": " invalid",
-      "condition": " Finished"
+      "name": "invalid",
+      "status": "pending",
     },
     {
-      "name": " sqrt",
-      "condition": "NotStarted"
-    }
-  ],
-  "result": "test success"
+      "name": "sqrt",
+      "status": "error",
+    },
+  ]
 }

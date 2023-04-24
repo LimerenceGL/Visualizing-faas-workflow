@@ -1,18 +1,20 @@
-<template xmlns:el-col="http://www.w3.org/1999/html">
+<template >
   <div class="detail-container">
     <el-row>
       <el-col :span="3">
-        <el-button size="small" style="float:left;margin-top:6px;margin-right:6px;"
-                   @click="back">返回上一级
-        </el-button>
+        <el-button size="small" @click="switchLayout">切换布局</el-button>
       </el-col>
       <el-col :span="3">
         <el-slider v-model="scale" :min="0.1" :max="2" :step="0.1" @change="onScaleChange"></el-slider>
       </el-col>
       <el-col :span="3">
-        <el-button size="small" @click="switchLayout">切换布局</el-button>
+        <el-button size="small" @click="clearNodeColors">模拟执行完成</el-button>
       </el-col>
-
+      <el-col :span="3">
+        <el-button size="small"
+                   @click="back">返回
+        </el-button>
+      </el-col>
     </el-row>
     <el-row>
 
@@ -21,7 +23,7 @@
       <div ref="canvas" class="canvasPanel" @wheel="onWheel"></div>
       <div class="detail-panel-container">
         <!-- Add your custom div here -->
-        <div >
+        <div>
           <process-panel :model="model"></process-panel>
         </div>
 
@@ -101,7 +103,7 @@ export default {
       selectedModel: {},
       graph: null,
       cmdPlugin: null,
-      model:{}
+      model: {}
 
 
     };
@@ -200,6 +202,25 @@ export default {
         ranksep: 20,
       });
     },
+    clearNodeColors() {
+      const nodes = this.graph.getNodes();
+      // 将特定节点的颜色设置为绿色
+      const targetNodeIds = ['startNode', 'rand', 'switchcal', 'sqrt', 'endNode'];
+      nodes.forEach((node) => {
+        const model = node.getModel();
+        let defaultStyle = {fill: 'transparent', stroke: 'black'}; // 设置为默认样式或透明颜色，如：{fill: 'transparent'}
+
+        if (targetNodeIds.includes(model.id)) {
+
+          defaultStyle = {fill: '#d8f6be', stroke: 'black'};
+        }
+        this.graph.updateItem(node, {
+          style: defaultStyle,
+        });
+      });
+      this.graph.refresh();
+    },
+
 
   },
   destroyed() {
@@ -268,8 +289,10 @@ export default {
     this.graph.setMode(this.mode);
     this.graph.data(this.initShape(this.data));
     this.graph.render();
+    this.clearNodeColors()
     this.graph.fitView(5);
     this.initEvents();
+
   },
 
 
@@ -287,8 +310,6 @@ export default {
   flex-direction: column;
   width: 30%;
 }
-
-
 
 
 .detail-container {

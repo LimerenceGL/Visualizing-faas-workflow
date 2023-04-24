@@ -91,16 +91,16 @@
           <el-collapse-item :title=templi>
             <label>名称: </label>
             <el-input
-
                 size="small"
                 placeholder="请输入内容"
                 :value="model['input'+num+'name']"
+                :disabled="readOnly"
                 @input="(value) => {onChange('input'+num+'name', value)}">
             </el-input>
             <br><br>
             <label>参数名称: </label>
             <el-select :value="model['input'+num+'task']" @input="(value) => {onChange('input'+num+'task', value)}"
-                       placeholder="请选择" size="small">
+                       placeholder="请选择" size="small" :disabled="readOnly">
               <el-option
                   v-for="item in input_task"
                   :key="item.value"
@@ -114,6 +114,7 @@
                 size="small"
                 placeholder="请输入内容"
                 :value="model['input'+num+'source']"
+                :disabled="readOnly"
                 @input="(value) => {onChange('input'+num+'source', value)}"
             >
             </el-input>
@@ -123,6 +124,7 @@
                 size="small"
                 placeholder="请输入内容"
                 :value="model['input'+num+'size']"
+                :disabled="readOnly"
                 @input="(value) => {onChange('input'+num+'size', value)}">
               <template slot="append">B</template>
             </el-input>
@@ -150,12 +152,13 @@
                 size="small"
                 placeholder="请输入内容"
                 :value="model['output'+num+'name']"
+                :disabled="readOnly"
                 @input="(value) => {onChange('output'+num+'name', value)}">
             </el-input>
             <br><br>
             <label>参数名称: </label>
             <el-select :value="model['output'+num+'task']" @input="(value) => {onChange('output'+num+'task', value)}"
-                       placeholder="请选择" size="small">
+                       placeholder="请选择" size="small" :disabled="readOnly">
               <el-option
                   v-for="item in input_task"
                   :key="item.value"
@@ -169,6 +172,7 @@
                 size="small"
                 placeholder="请输入内容"
                 :value="model['output'+num+'size']"
+                :disabled="readOnly"
                 @input="(value) => {onChange('output'+num+'size', value)}">
               <template slot="append">B</template>
             </el-input>

@@ -1,12 +1,16 @@
 import {downloadFile} from "./bpmn";
 import YAML from "js-yaml";
 
-export function downloadYAML(graph) {
+export function downloadYAML(graph, DOWNLOAD = true) {
 
     const YAML = require('js-yaml');
     let jsonData = generateYAML_json(graph)
     let yamlData = YAML.dump(jsonData)
-    downloadFile(yamlData, 'application/yaml', 'config.yaml')
+    if (DOWNLOAD) {
+        downloadFile(yamlData, 'application/yaml', 'config.yaml')
+    } else {
+        return yamlData
+    }
 }
 
 export function downloadJSON(graph) {
@@ -134,17 +138,23 @@ export function generateYAML_json(graph) {
 
 
 function parseGlobalInput(node) {
-    let rst = {}
-    for (let i = 1; i <= 10; i++) {
 
-        if (node.hasOwnProperty('input' + i + 'name') && node['input' + i + 'name'] !== '') {
-            let currentInput = node['input' + i + 'name']
-            rst[currentInput] = {}
-            rst[currentInput]['type'] = get_prop(node, 'input' + i + 'task')
-            rst[currentInput]['source'] = get_prop(node, 'input' + i + 'source')
-            rst[currentInput]['size'] = get_prop(node, 'input' + i + 'size')
+    let rst = {}
+    try {
+        for (let i = 1; i <= 10; i++) {
+
+            if (node.hasOwnProperty('input' + i + 'name') && node['input' + i + 'name'] !== '') {
+                let currentInput = node['input' + i + 'name']
+                rst[currentInput] = {}
+                rst[currentInput]['type'] = get_prop(node, 'input' + i + 'task')
+                rst[currentInput]['source'] = get_prop(node, 'input' + i + 'source')
+                rst[currentInput]['size'] = get_prop(node, 'input' + i + 'size')
+            }
         }
-    }
+    }catch (error) {
+
+      }
+
     return rst
 }
 
@@ -204,7 +214,7 @@ function parseTaskNode(node) {
     rst['requirement'] = {};
     rst['requirement']['mem_req'] = get_prop(node, 'reqmem_req', Number);
 
-    rst['requirement']['gpu']=get_prop(node, 'reqgpu')==='true'
+    rst['requirement']['gpu'] = get_prop(node, 'reqgpu') === 'true'
     rst['inputs'] = {};
     rst['outputs'] = {};
 
@@ -219,7 +229,7 @@ function parseTaskNode(node) {
             rst['inputs'][currentInput]['size'] = get_prop(node, 'input' + i + 'size', Number)
         }
     }
-    if (Object.keys(rst.inputs).length===0){
+    if (Object.keys(rst.inputs).length === 0) {
         delete rst['inputs']
     }
     for (let i = 1; i <= 10; i++) {
@@ -230,7 +240,7 @@ function parseTaskNode(node) {
             rst['outputs'][currentOutput]['size'] = get_prop(node, 'output' + i + 'size', Number)
         }
     }
-    if (Object.keys(rst.outputs).length===0){
+    if (Object.keys(rst.outputs).length === 0) {
         delete rst['outputs']
     }
     return rst
@@ -272,7 +282,6 @@ function parseSwitchNode(node, nextNodes) {
     }
     return rst;
 }
-
 
 
 function add_edge(source, target, id) {

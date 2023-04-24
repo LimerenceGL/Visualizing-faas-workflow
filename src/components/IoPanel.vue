@@ -2,7 +2,9 @@
 
   <div id="IoPanel">
 
-
+    <el-button size="small" style="float:right;margin-top:6px;margin-right:6px;"
+               @click="back">返回
+    </el-button>
     <el-button size="small" style="float:right;margin-top:6px;margin-right:6px;"
                @click="()=>{graph.saveYAML()}">导出YAML
     </el-button>
@@ -13,8 +15,12 @@
                @click="clickFile">导入工作流
     </el-button>
     <el-button size="small" style="float:right;margin-top:6px;margin-right:6px;"
-               @click="saveWorkflow">保存工作流<i class="el-icon-upload el-icon--right"></i>
+               @click="saveWorkflow">保存工作流
     </el-button>
+    <el-button size="small" style="float:right;margin-top:6px;margin-right:6px;"
+               @click="createNewWorkflow">新建工作流
+    </el-button>
+
     <!--    <el-button size="small" style="float:right;margin-top:6px;margin-right:6px;"-->
     <!--               @click="pollingRequests">部署工作流-->
     <!--    </el-button>-->
@@ -79,7 +85,9 @@ export default {
     }
   },
   methods: {
-
+    back() {
+      this.$router.go(-1)
+    },
     readInputFile(event) {
       let file = event.target.files[0];
 
@@ -100,8 +108,18 @@ export default {
 
       });
       reader.readAsText(file);
+    },
+    async createNewWorkflow() {
+      // 检查图形是否为空（没有节点和边）
+      const isEmpty = this.graph.getNodes().length === 0 ;
 
-
+      // 如果图形不为空且用户同意保存工作流，则保存工作流
+      if (!isEmpty && confirm("当前工作流不为空，是否保存？")) {
+        await this.saveWorkflow();
+      }
+      this.workflowName = "";
+      this.onWorkflowNameChange();
+      this.$emit("resetGraph");
     },
 
     clickFile() {

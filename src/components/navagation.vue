@@ -18,10 +18,10 @@
             <span slot="title">工作流管理</span>
 
           </el-menu-item>
-          <el-menu-item index="/execute">
-            <i class="el-icon-document"></i>
-            <span slot="title">工作流执行</span>
-          </el-menu-item>
+<!--          <el-menu-item index="/execute">-->
+<!--            <i class="el-icon-document"></i>-->
+<!--            <span slot="title">工作流执行</span>-->
+<!--          </el-menu-item>-->
           <el-menu-item index="/elementui">
             <i class="el-icon-document"></i>
             <span slot="title">系统监控</span>
