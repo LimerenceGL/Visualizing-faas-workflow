@@ -3,11 +3,11 @@
   <!--  <el-radio-button :label="false">展开</el-radio-button>-->
   <!--  <el-radio-button :label="true">收起</el-radio-button>-->
   <!--</el-radio-group>-->
-  <div >
+  <div>
     <el-row class="tac">
       <el-col :span="24">
-        <el-menu default-active="arrange" router class="el-menu-vertical-demo" @open="handleOpen" @close="handleClose"
-                 :collapse="isCollapse" >
+        <el-menu :default-active="activeIndex" router class="el-menu-vertical-demo"
+                 :collapse="isCollapse">
 
           <el-menu-item index="/arrange">
             <i class="el-icon-menu"></i>
@@ -18,10 +18,10 @@
             <span slot="title">工作流管理</span>
 
           </el-menu-item>
-<!--          <el-menu-item index="/execute">-->
-<!--            <i class="el-icon-document"></i>-->
-<!--            <span slot="title">工作流执行</span>-->
-<!--          </el-menu-item>-->
+          <!--          <el-menu-item index="/execute">-->
+          <!--            <i class="el-icon-document"></i>-->
+          <!--            <span slot="title">工作流执行</span>-->
+          <!--          </el-menu-item>-->
           <el-menu-item index="/elementui">
             <i class="el-icon-document"></i>
             <span slot="title">系统监控</span>
@@ -38,17 +38,23 @@ export default {
   name: "navagation",
   data() {
     return {
-      isCollapse: false
+      isCollapse: false,
+      activeIndex: "/arrange", // 默认高亮显示工作流管理
     }
   },
-  methods: {
-    handleOpen(key, keyPath) {
-      console.log(key, keyPath);
+  watch: {
+    $route(to, from) {
+      // 根据当前路由更新活动导航项
+
+      var valid_path = to.path.split('/');
+      if (valid_path[1] == "execute" || valid_path[1] == "detail") {
+        this.activeIndex = "/manager"
+      } else {
+        this.activeIndex = "/" + valid_path[1];
+      }
     },
-    handleClose(key, keyPath) {
-      console.log(key, keyPath);
-    },
-  }
+  },
+
 }
 </script>
 
@@ -57,10 +63,12 @@ export default {
   height: 100vh;
   border-right: none;
 }
+
 .el-menu-item {
   display: flex;
   align-items: center;
 }
+
 .el-menu-vertical-demo {
   width: 100%;
   height: 800px;

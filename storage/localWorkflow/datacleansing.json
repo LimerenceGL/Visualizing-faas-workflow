@@ -1,0 +1,395 @@
+{
+  "nodes": [
+    {
+      "shape": "start-node",
+      "id": "startNode",
+      "label": "",
+      "clazz": "start",
+      "style": {},
+      "size": [
+        30,
+        30
+      ],
+      "depth": 0,
+      "x": 261.25,
+      "y": 35
+    },
+    {
+      "shape": "mail-task-node",
+      "run": "datacleansing-split",
+      "runtime": 5.13,
+      "scale": 3,
+      "mem_usage": 0.25,
+      "id": "split",
+      "clazz": "mailTask",
+      "label": "split",
+      "hideIcon": true,
+      "output1name": "class_2",
+      "output1task": "normal",
+      "output1size": "29000704",
+      "output2name": "class_3",
+      "output2task": "normal",
+      "output2size": "33000448",
+      "output3name": "class_4",
+      "output3task": "normal",
+      "output3size": "28889088",
+      "outputCount": 3,
+      "reqmem_req": "0.25",
+      "reqgpu": "false",
+      "style": {},
+      "size": [
+        75,
+        44
+      ],
+      "depth": 0,
+      "x": 261.25,
+      "y": 132
+    },
+    {
+      "shape": "timer-catch-node",
+      "id": "parallel1",
+      "clazz": "timerCatch",
+      "label": "parallel1",
+      "hideIcon": true,
+      "style": {},
+      "size": [
+        50,
+        30
+      ],
+      "depth": 0,
+      "x": 261.25,
+      "y": 229
+    },
+    {
+      "shape": "mail-task-node",
+      "run": "datacleansing-filter",
+      "runtime": 1.97,
+      "scale": 3,
+      "mem_usage": 0.25,
+      "id": "filter",
+      "clazz": "mailTask",
+      "label": "filter",
+      "hideIcon": true,
+      "input1name": "class_4",
+      "input1task": "normal",
+      "input1source": "split.class_4",
+      "input1size": "28889088",
+      "inputCount": 1,
+      "output1name": "class_filter",
+      "output1task": "normal",
+      "output1size": "12889088",
+      "outputCount": 1,
+      "reqmem_req": "0.25",
+      "reqgpu": "false",
+      "style": {},
+      "size": [
+        75,
+        44
+      ],
+      "depth": 0,
+      "x": 87.5,
+      "y": 430
+    },
+    {
+      "shape": "mail-task-node",
+      "run": "datacleansing-mapping",
+      "runtime": 1.92,
+      "scale": 3,
+      "mem_usage": 0.25,
+      "id": "mapping",
+      "clazz": "mailTask",
+      "label": "mapping",
+      "hideIcon": true,
+      "input1name": "class_3",
+      "input1task": "normal",
+      "input1source": "split.class_3",
+      "input1size": "33000448",
+      "inputCount": 1,
+      "output1name": "class_mapping",
+      "output1task": "normal",
+      "output1size": "49000448",
+      "outputCount": 1,
+      "reqmem_req": "0.25",
+      "reqgpu": "false",
+      "style": {},
+      "size": [
+        75,
+        44
+      ],
+      "depth": 0,
+      "x": 261.25,
+      "y": 326
+    },
+    {
+      "shape": "mail-task-node",
+      "run": "datacleansing-enrich",
+      "runtime": 1.73,
+      "scale": 3,
+      "mem_usage": 0.25,
+      "id": "enrich",
+      "clazz": "mailTask",
+      "label": "enrich",
+      "hideIcon": true,
+      "input1name": "class_2",
+      "input1task": "normal",
+      "input1source": "split.class_2",
+      "input1size": "29000704",
+      "inputCount": 1,
+      "output1name": "class_enrich",
+      "output1task": "normal",
+      "output1size": "32001024",
+      "outputCount": 1,
+      "reqmem_req": "0.25",
+      "reqgpu": "false",
+      "style": {},
+      "size": [
+        75,
+        44
+      ],
+      "depth": 0,
+      "x": 486.25,
+      "y": 326
+    },
+    {
+      "shape": "mail-task-node",
+      "run": "datacleansing-count",
+      "runtime": 15.3,
+      "scale": 3,
+      "mem_usage": 0.25,
+      "id": "count",
+      "clazz": "mailTask",
+      "label": "count",
+      "hideIcon": true,
+      "input1name": "class_mapping",
+      "input1task": "normal",
+      "input1source": "mapping.class_mapping",
+      "input1size": "49000448",
+      "input2name": "class_enrich",
+      "input2task": "normal",
+      "input2source": "enrich.class_enrich",
+      "input2size": "32001024",
+      "inputCount": 2,
+      "output1name": "count_result",
+      "output1task": "normal",
+      "output1size": "8",
+      "outputCount": 1,
+      "reqmem_req": "0.25",
+      "reqgpu": "false",
+      "style": {},
+      "size": [
+        75,
+        44
+      ],
+      "depth": 0,
+      "x": 373.75,
+      "y": 430
+    },
+    {
+      "shape": "end-node",
+      "id": "endNode",
+      "label": "",
+      "clazz": "end",
+      "style": {},
+      "size": [
+        30,
+        30
+      ],
+      "depth": 0,
+      "x": 261.25,
+      "y": 527
+    }
+  ],
+  "edges": [
+    {
+      "source": "startNode",
+      "target": "split",
+      "clazz": "flow",
+      "shape": "flow-polyline-round",
+      "id": "flow1",
+      "style": {},
+      "startPoint": {
+        "x": 261.25,
+        "y": 50.5,
+        "index": 3,
+        "anchorIndex": 3
+      },
+      "endPoint": {
+        "x": 261.25,
+        "y": 109.5,
+        "index": 0,
+        "anchorIndex": 0
+      },
+      "depth": 0
+    },
+    {
+      "source": "split",
+      "target": "parallel1",
+      "clazz": "flow",
+      "shape": "flow-polyline-round",
+      "id": "flow2",
+      "style": {},
+      "startPoint": {
+        "x": 261.25,
+        "y": 154.5,
+        "index": 2,
+        "anchorIndex": 2
+      },
+      "endPoint": {
+        "x": 261.25,
+        "y": 217.8598156003355,
+        "index": 0,
+        "anchorIndex": 0
+      },
+      "depth": 0
+    },
+    {
+      "source": "parallel1",
+      "target": "filter",
+      "clazz": "flow",
+      "shape": "flow-polyline-round",
+      "id": "flow3",
+      "style": {},
+      "startPoint": {
+        "x": 261.25,
+        "y": 249.78102496759067,
+        "index": 2,
+        "anchorIndex": 2
+      },
+      "endPoint": {
+        "x": 87.5,
+        "y": 407.5,
+        "index": 0,
+        "anchorIndex": 0
+      },
+      "depth": 0
+    },
+    {
+      "source": "parallel1",
+      "target": "mapping",
+      "clazz": "flow",
+      "shape": "flow-polyline-round",
+      "id": "flow4",
+      "style": {},
+      "startPoint": {
+        "x": 261.25,
+        "y": 249.78102496759067,
+        "index": 2,
+        "anchorIndex": 2
+      },
+      "endPoint": {
+        "x": 261.25,
+        "y": 303.5,
+        "index": 0,
+        "anchorIndex": 0
+      },
+      "depth": 0
+    },
+    {
+      "source": "parallel1",
+      "target": "enrich",
+      "clazz": "flow",
+      "shape": "flow-polyline-round",
+      "id": "flow5",
+      "style": {},
+      "startPoint": {
+        "x": 276.8905124837953,
+        "y": 229.98987515989248,
+        "index": 1,
+        "anchorIndex": 1
+      },
+      "endPoint": {
+        "x": 448.25,
+        "y": 326,
+        "index": 3,
+        "anchorIndex": 3
+      },
+      "depth": 0
+    },
+    {
+      "source": "filter",
+      "target": "endNode",
+      "clazz": "flow",
+      "shape": "flow-polyline-round",
+      "id": "flow6",
+      "style": {},
+      "startPoint": {
+        "x": 125.5,
+        "y": 430,
+        "index": 1,
+        "anchorIndex": 1
+      },
+      "endPoint": {
+        "x": 245.75,
+        "y": 527,
+        "index": 2,
+        "anchorIndex": 2
+      },
+      "depth": 0
+    },
+    {
+      "source": "mapping",
+      "target": "count",
+      "clazz": "flow",
+      "shape": "flow-polyline-round",
+      "id": "flow7",
+      "style": {},
+      "startPoint": {
+        "x": 261.25,
+        "y": 348.5,
+        "index": 2,
+        "anchorIndex": 2
+      },
+      "endPoint": {
+        "x": 373.75,
+        "y": 407.5,
+        "index": 0,
+        "anchorIndex": 0
+      },
+      "depth": 0
+    },
+    {
+      "source": "enrich",
+      "target": "count",
+      "clazz": "flow",
+      "shape": "flow-polyline-round",
+      "id": "flow8",
+      "style": {},
+      "startPoint": {
+        "x": 486.25,
+        "y": 348.5,
+        "index": 2,
+        "anchorIndex": 2
+      },
+      "endPoint": {
+        "x": 373.75,
+        "y": 407.5,
+        "index": 0,
+        "anchorIndex": 0
+      },
+      "depth": 0
+    },
+    {
+      "source": "count",
+      "target": "endNode",
+      "clazz": "flow",
+      "shape": "flow-polyline-round",
+      "id": "flow9",
+      "style": {},
+      "startPoint": {
+        "x": 335.75,
+        "y": 430,
+        "index": 3,
+        "anchorIndex": 3
+      },
+      "endPoint": {
+        "x": 276.75,
+        "y": 527,
+        "index": 3,
+        "anchorIndex": 3
+      },
+      "depth": 0
+    }
+  ],
+  "combos": [],
+  "groups": []
+}

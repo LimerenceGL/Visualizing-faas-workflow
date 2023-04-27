@@ -42,9 +42,9 @@
             @change="filterData"
         ></el-date-picker>
       </div>
-          <el-button size="small"
-               @click="back">返回
-    </el-button>
+      <el-button size="small"
+                 @click="back">返回
+      </el-button>
     </div>
     <el-table
         :data="displayedData"
@@ -55,14 +55,17 @@
       <el-table-column label="状态">
         <template slot-scope="scope">
           <span :class="{
-            'status-finished': scope.row.status === 'finished',
+            'status-finished': scope.row.status === 'DONE',
             'status-failed': scope.row.status === 'failed',
-            'status-running': scope.row.status === 'running'
+            'status-running': scope.row.status === 'EXECUTING'
           }">{{ scope.row.status }}</span>
+          <div v-if="scope.row.status === 'EXECUTING'" class="spinner"></div>
         </template>
       </el-table-column>
       <el-table-column prop="start_time" label="开始时间"></el-table-column>
       <el-table-column prop="end_time" label="结束时间"></el-table-column>
+      <el-table-column prop="duration" label="持续时间"></el-table-column>
+
       <el-table-column label="操作">
         <template slot-scope="scope">
           <el-button
@@ -90,6 +93,7 @@ export default {
   name: "Execute",
   data() {
     return {
+      edgeflow_base_url: 'http://133.133.133.53:8087',
       workflow_name: "",
       tableData: [],
       filteredData: [],
@@ -100,7 +104,8 @@ export default {
       searchEndTime: "",
       pageSize: 9,
       currentPage: 1,
-      base_url: 'http://localhost:3000'
+      base_url: 'http://localhost:3000',
+      timer: null,
     };
   },
   computed: {
@@ -114,7 +119,7 @@ export default {
 
     // 跳转到详情页
     goToDetail(id) {
-      this.$router.push(`/detail/${id}`);
+      this.$router.push(`/detail/${this.workflow_name}/${id}`);
     },
     back() {
       this.$router.go(-1)
@@ -143,35 +148,149 @@ export default {
         return matchName && matchId && matchStatus && matchStartTime && matchEndTime;
       });
     },
+    // fetchData() {
+    //   const name = this.$route.query.name;
+    //   this.workflow_name = name;
+    //
+    //   console.log(name)
+    //   // 使用 fetch 获取 API 数据
+    //   fetch(`${this.base_url}/api/workflow_instances?name=${name}`)
+    //       .then((response) => response.json())
+    //       .then((data) => {
+    //         this.tableData = data.instances;
+    //         this.filteredData = data.instances;
+    //       });
+    // },
     fetchData() {
-      const name = this.$route.query.name;
+      const name = this.$route.query.workflowName;
       this.workflow_name = name;
 
-      console.log(name)
-      // 使用 fetch 获取 API 数据
-      fetch(`${this.base_url}/api/workflow_instances?name=${name}`)
-          .then((response) => response.json())
-          .then((data) => {
-            this.tableData = data.instances;
-            this.filteredData = data.instances;
-          });
+      const instances = JSON.parse(this.$route.query.instances);
+      this.tableData = instances.map(instance => ({
+        id: instance.call_id,
+        status: instance.status,
+        start_time: instance.start_time.substring(0, 19), // 修改为新数据格式的字段
+        end_time: instance.end_time.substring(0, 19), //
+        duration: this.calculateDuration(instance.start_time.substring(0, 19), instance.end_time.substring(0, 19))
+      }));
+
+      // 按开始时间降序排序
+      this.tableData.sort((a, b) => {
+        return new Date(b.start_time) - new Date(a.start_time);
+      });
+
+      this.filteredData = this.tableData;
     },
+    async checkExecutingStatus() {
+      // 检查是否存在执行状态为 EXECUTING 的实例
+      const hasExecutingInstance = this.tableData.some(
+          (instance) => instance.status === "EXECUTING"
+      );
+
+      if (!hasExecutingInstance) {
+        return;
+      }
+
+      try {
+        const response = await fetch(
+            `${this.edgeflow_base_url}/workflow/statuses/${this.workflow_name}`
+        );
+
+        if (!response.ok) {
+          console.error("获取工作流实例状态失败");
+          return;
+        }
+
+        const data = await response.json();
+        const updatedInstances = data.statuses;
+
+        // 使用更新后的实例数据更新表格数据
+        this.tableData = this.tableData.map((instance) => {
+          const updatedInstance = updatedInstances.find(
+              (item) => item.call_id === instance.id
+          );
+
+          if (updatedInstance) {
+            return {
+              ...instance,
+              status: updatedInstance.status,
+              end_time: updatedInstance.end_time.substring(0, 19),
+              duration: this.calculateDuration(
+                  instance.start_time,
+                  updatedInstance.end_time.substring(0, 19)
+              ),
+            };
+          }
+
+          return instance;
+        });
+
+        this.filteredData = this.tableData;
+      } catch (error) {
+        console.error(error);
+      }
+    },
+
+    calculateDuration(startTime, endTime) {
+      const startDate = new Date(startTime);
+      const endDate = new Date(endTime);
+
+      // Ensure both dates are valid
+      if (isNaN(startDate) || isNaN(endDate)) {
+        return ''
+      }
+
+      // Calculate the duration in milliseconds
+      const durationMilliseconds = endDate.getTime() - startDate.getTime();
+
+      // Convert the duration to hours, minutes, and seconds
+      const durationSeconds = Math.floor(durationMilliseconds / 1000);
+      const hours = Math.floor(durationSeconds / 3600);
+      const minutes = Math.floor((durationSeconds % 3600) / 60);
+      const seconds = durationSeconds % 60;
+
+      // Format the duration as a string
+      let durationString = '';
+
+      if (hours > 0) {
+        durationString += `${hours} hours, `;
+      }
+
+      if (minutes > 0) {
+        durationString += `${minutes} minutes, `;
+      }
+
+      durationString += `${seconds} seconds`;
+
+      return durationString;
+    },
+
+
     handlePageChange(page) {
       this.currentPage = page;
     },
 
   },
   mounted() {
-    // this.fetchData();
+    this.fetchData();
+        this.timer = setInterval(() => {
+      this.checkExecutingStatus();
+    }, 3000);
     // 从json文件中获取数据
-    fetch('/data.json')
-        .then((response) => response.json()
-        ).then((data) => {
-      this.workflow_name = data.workflow_name;
-      this.tableData = data.instances;
-      this.filteredData = data.instances;
-    });
-  }
+    // fetch('/data.json')
+    //     .then((response) => response.json()
+    //     ).then((data) => {
+    //   this.workflow_name = data.workflow_name;
+    //   this.tableData = data.instances;
+    //   this.filteredData = data.instances;
+    // });
+
+  },
+  // 当组件被销毁时，清除定时器
+  beforeDestroy() {
+    clearInterval(this.timer);
+  },
+
 };
 </script>
 
@@ -246,6 +365,7 @@ export default {
 .status-running {
   color: #FFC107; /* 柔和的黄色 */
 }
+
 .back-button {
   background-color: #409eff;
   color: #fff;
@@ -258,4 +378,24 @@ export default {
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
 
+.spinner {
+  display: inline-block;
+  width: 15px;
+  height: 15px;
+  border: 2px solid rgba(0, 0, 0, 0.1);
+  border-left-color: black;
+  border-radius: 50%;
+  margin-top: 10px;
+  margin-left: 5px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
 </style>

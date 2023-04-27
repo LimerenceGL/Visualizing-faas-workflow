@@ -77,10 +77,8 @@ export default {
 
       jsonFromFile: {"nodes": [], "edges": [], "combos": [], "groups": []},
       RealtimeData: null,
-
-
       showDialog: false,
-      tempWorkflowName: "",
+      tempWorkflowName: this.workflowName,
 
     }
   },
@@ -100,7 +98,11 @@ export default {
       reader.addEventListener('load', event => {
         let content = event.target.result;
         if (fileType === "yaml" || fileType === "yml") {
-          this.jsonFromFile = this.graph.loadYAML(content)
+          const {rst, workflowName} = this.graph.loadYAML(content)
+          this.jsonFromFile = rst
+          this.tempWorkflowName = workflowName
+
+          this.onWorkflowNameChange();
         } else if (fileType === "json") {
           this.jsonFromFile = JSON.parse(content)
         }
@@ -111,13 +113,13 @@ export default {
     },
     async createNewWorkflow() {
       // 检查图形是否为空（没有节点和边）
-      const isEmpty = this.graph.getNodes().length === 0 ;
+      const isEmpty = this.graph.getNodes().length === 0;
 
       // 如果图形不为空且用户同意保存工作流，则保存工作流
       if (!isEmpty && confirm("当前工作流不为空，是否保存？")) {
         await this.saveWorkflow();
       }
-      this.workflowName = "";
+      this.tempWorkflowName = "";
       this.onWorkflowNameChange();
       this.$emit("resetGraph");
     },
@@ -129,12 +131,8 @@ export default {
     },
     async fetchData() {
       try {
-        // const response = await axios.post('/api/data', { // 发起POST请求
-        //   key1: 'value1',
-        //   key2: 'value2'
-        // });
-        const response = await axios.get('/test.json');
 
+        const response = await axios.get('/test.json');
         this.RealtimeData = response.data // 更新数据
       } catch (error) {
         console.log(error);
@@ -169,9 +167,6 @@ export default {
     },
 
 
-    // onWorkflowNameChange() {
-    //   this.$emit("updateWorkflowName", this.workflowName);
-    // },
     async saveWorkflow() {
       if (!this.workflowName) {
         Message({
@@ -229,7 +224,7 @@ export default {
       }
     },
     openDialog() {
-      this.tempWorkflowName = this.workflowName;
+
       this.showDialog = true;
       this.$nextTick(() => {
         // 使用 $refs 获取 el-input 组件并调用 focus() 方法
@@ -238,13 +233,14 @@ export default {
     },
 
     saveWorkflowName() {
-      this.workflowName = this.tempWorkflowName;
+
       this.onWorkflowNameChange();
+
       this.showDialog = false;
     },
 
     onWorkflowNameChange() {
-      this.$emit("updateWorkflowName", this.workflowName);
+      this.$emit("updateWorkflowName", this.tempWorkflowName);
     },
   },
   props: {

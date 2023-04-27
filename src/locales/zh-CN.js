@@ -24,7 +24,7 @@ export default {
   'mailTask.to': '收件人',
   'mailTask.subject': '标题',
   'mailTask.content': '内容',
-  'receiveTask': '接收节点',
+  'receiveTask': 'merge',
   'receiveTask.waitState': '等待属性',
   'receiveTask.stateValue': '等待值',
   'timerEvent': '定时节点',

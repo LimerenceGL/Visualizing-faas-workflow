@@ -13,7 +13,7 @@
         <keep-alive>
           <router-view name="Wfd" ref="wfd" :height="containerHeight" :lang="lang" :data="this.jsonFromFile"
                        :layout="layout" @update-layout="updateLayout" @update:data="updateDataFromChild"
-                       :workflowName="workflowName"></router-view>
+                       :workflowName="workflowName" @updateWorkflowName="updateWorkflowName"></router-view>
         </keep-alive>
         <!--        <wfd-vue ref="wfd" :height="600" :lang="lang" :data="this.jsonFromFile" :layout="layout"-->
         <!--             @update-layout="updateLayout"/>-->
@@ -27,7 +27,7 @@
     <input id="datafile" type="file" accept=".yml, .yaml, .json"/><br/>
 
 
-<!--    {{ RealtimeData }}-->
+    <!--    {{ RealtimeData }}-->
 
   </div>
 </template>
@@ -83,8 +83,11 @@ export default {
       });
       reader.readAsText(file);
 
-
     },
+    updateWorkflowName(newName) {
+      this.workflowName = newName;
+    },
+
     updateDataFromChild(newData) {
       this.jsonFromFile = newData;
     },

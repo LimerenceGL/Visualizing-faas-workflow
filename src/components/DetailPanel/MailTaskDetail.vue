@@ -28,25 +28,25 @@
                   @input="(value) => {onChange('run', value)}"/>
       </div>
 
-      <!--      <div class="panelRow">-->
-      <!--        <div>函数运行时间：</div>-->
-      <!--        <el-input style="width:90%; font-size:12px"-->
-      <!--                  :disabled="readOnly"-->
-      <!--                  :value="model.runtime"-->
-      <!--                  @input="(value) => {onChange('runtime', value)}-->
-      <!--">-->
-      <!--          <template slot="append">s</template>-->
-      <!--        </el-input>-->
-      <!--      </div>-->
-      <div class="panelRow">
-        <div >伸缩敏感度：</div>
-        <el-input style="width:90%; font-size:12px"
-                  :disabled="readOnly"
-                  :value="model.mem_usage"
-                  @input="(value) => {onChange('mem_usage', value)}">
-          <template slot="append">%</template>
-        </el-input>
-      </div>
+            <div class="panelRow">
+              <div>函数运行时间：</div>
+              <el-input style="width:90%; font-size:12px"
+                        :disabled="readOnly"
+                        :value="model.runtime"
+                        @input="(value) => {onChange('runtime', value)}
+      ">
+                <template slot="append">s</template>
+              </el-input>
+            </div>
+<!--      <div class="panelRow">-->
+<!--        <div >伸缩敏感度：</div>-->
+<!--        <el-input style="width:90%; font-size:12px"-->
+<!--                  :disabled="readOnly"-->
+<!--                  :value="model.mem_usage"-->
+<!--                  @input="(value) => {onChange('mem_usage', value)}">-->
+<!--          <template slot="append">%</template>-->
+<!--        </el-input>-->
+<!--      </div>-->
       <div class="panelRow">
         <div>最大副本数：</div>
         <el-input style="width:90%; font-size:12px"
@@ -63,17 +63,17 @@
           <template slot="append">GB</template>
         </el-input>
       </div>
-      <!--     -->
-      <!--      <div class="panelRow">-->
-      <!--        <div>GPU需求：</div>-->
-      <!--        <el-select :value="model.reqgpu" @input="(value) => {onChange('reqgpu', value)}" placeholder="请选择">-->
-      <!--          <el-option-->
-      <!--              v-for="item in gpu_options"-->
-      <!--              :key="item.value"-->
-      <!--              :label="item.label"-->
-      <!--              :value="item.value"></el-option>-->
-      <!--        </el-select>-->
-      <!--      </div>-->
+
+            <div class="panelRow">
+              <div>GPU需求：</div>
+              <el-select :value="model.reqgpu" @input="(value) => {onChange('reqgpu', value)}" placeholder="请选择">
+                <el-option
+                    v-for="item in gpu_options"
+                    :key="item.value"
+                    :label="item.label"
+                    :value="item.value"></el-option>
+              </el-select>
+            </div>
       <div class="panelRow">
         <label style="width: 20%;display: inline-block">输入: </label>
         <label style="width: 15%;display: inline-block">{{
@@ -187,11 +187,11 @@
 </template>
 <script>
 import DefaultDetail from "./DefaultDetail";
-import disableInputMixin from "../../mixins/disableInput"
+
 
 export default {
   inject: ['i18n'],
-  mixins: [disableInputMixin],
+
   data() {
     return {
       gpu_options: [

@@ -47,6 +47,7 @@
       <el-table-column label="删除">
         <template slot-scope="scope">
           <el-button
+              type="button"
               plain
               :disabled="scope.row.tag === 'deployed'"
               @click="deleteFile(scope.row)"
@@ -95,6 +96,7 @@
         <template slot-scope="scope">
           <el-button
               plain
+              :disabled="scope.row.tag !== 'deployed'"
               @click="goToDetail(scope.row.name)"
           >
             查看实例
@@ -119,7 +121,7 @@ export default {
   name: "Manager",
   data() {
     return {
-      edgeflow_base_url: '', // 后续填写实际的后端URL
+      edgeflow_base_url: 'http://133.133.133.53:8087', // 后续填写实际的后端URL
       tableData: [],
       filteredData: [],
       searchName: "",
@@ -132,27 +134,7 @@ export default {
     };
   },
   computed: {
-    timeDifference() {
-      return (timestamp) => {
-        if (!timestamp) return "未知";
-        const now = Date.now();
-        const diff = now - timestamp;
-        const minute = 60 * 1000;
-        const hour = 60 * minute;
-        const day = 24 * hour;
-        if (diff < minute) {
-          return Math.floor(diff / 1000) + "秒前";
-        } else if (diff < hour) {
-          return Math.floor(diff / minute) + "分钟前";
-        } else if (diff < day) {
-          return Math.floor(diff / hour) + "小时前";
-        } else if (diff < 10 * day) {
-          return Math.floor(diff / day) + "天前";
-        } else {
-          return "10天以上";
-        }
-      };
-    },
+
     displayedData() {
       const start = (this.currentPage - 1) * this.pageSize;
       const end = start + this.pageSize;
@@ -161,19 +143,52 @@ export default {
   },
   methods: {
 
-    // // 跳转到详情页
-    // goToDetail(id) {
-    //   this.$router.push(`/detail/${id}`);
-    // },
+
     // 跳转到详情页
-    goToDetail(name) {
-      this.$router.push({
-        path: `/execute`,
-        query: {
-          name: name.replace(".json", ""),
-        },
-      });
+    async goToDetail(name) {
+      try {
+        const response = await fetch(
+            `${this.edgeflow_base_url}/workflow/statuses/${name.replace(".json", "")}`
+        );
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          // 处理404错误
+          if (errorData.error.code === 404) {
+            this.$message.error("工作流未找到");
+          }
+          // 处理其他错误
+          else {
+            this.$message.error("请求失败，请重试");
+          }
+          return;
+        }
+
+        const data = await response.json();
+
+        this.$router.push({
+          path: `/execute`,
+          query: {
+            workflowName: name.replace(".json", ""),
+            instances: JSON.stringify(data.statuses),
+          },
+        });
+      } catch (error) {
+        console.error(error);
+        this.$message.error("请求失败，请重试");
+      }
     },
+
+
+
+    // goToDetail(name) {
+    //   this.$router.push({
+    //     path: `/execute`,
+    //     query: {
+    //       name: name.replace(".json", ""),
+    //     },
+    //   });
+    // },
 
     // 根据状态返回对应的文本
     tableStatusFormatter(status) {
@@ -213,28 +228,30 @@ export default {
       this.currentPage = page;
     },
     async deleteFile(file) {
-      await fetch(this.base_url + `/public/localWorkflow/${file.name}?id=${file.id}`, {
+      await fetch(this.base_url + `/storage/localWorkflow/${file.name}?id=${file.id}`, {
         method: 'DELETE',
       });
+
       this.fetchFileList();
     },
 
 
     async deployFile(file) {
-      const response = await fetch(`${this.base_url}/public/localWorkflow/${file.name}`);
+      const response = await fetch(`${this.base_url}/storage/localWorkflow/${file.name}`);
       const deployJsonData = await response.json();
-      const deployYamlData = downloadYAML(deployJsonData, false)
+      const deployYamlData = downloadYAML(deployJsonData, file.name.replace(".json", ""), false)
 
       try {
-        const workflowName = file.name.replace(/\.yaml$/, ''); // 去掉.yaml后缀作为workflowName
+        const workflowName = file.name.replace(/\.json$/, ''); // 去掉后缀作为workflowName
+        const formData = new FormData();
+        formData.append('file', new Blob([deployYamlData], {type: 'multipart/form-data'}), `${workflowName}.yaml`);
+
         const deployResponse = await fetch(`${this.edgeflow_base_url}/workflow/deploy/${workflowName}`, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-           body: new FormData().append('file', new Blob([deployYamlData], {type: 'application/x-yaml'}), file.name),
+          body: formData,
         });
 
+        console.log(deployResponse)
         if (deployResponse.ok) {
           const updatedFile = {...file, tag: 'deployed'};
           await this.updateFile(updatedFile);
@@ -250,6 +267,7 @@ export default {
         this.$message.error('部署请求失败');
       }
     },
+
 
     async undeployFile(file) {
       try {
@@ -284,17 +302,19 @@ export default {
       }
 
       try {
-        const response = await fetch(`${this.edgeflow_base_url}/invoke`, {
+        const workflowName = file.name.replace(/\.json$/, ''); // 去掉后缀作为workflowName
+
+        const response = await fetch(`${this.edgeflow_base_url}/workflow/execute/${workflowName}`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({workflow_name: file.name}),
+          body: JSON.stringify({}),
         });
 
         if (response.ok) {
           const responseData = await response.json();
-          this.$message.success(`工作流已成功调用, 实例ID: ${responseData.instance_id}`);
+          this.$message.success(`工作流已成功调用, 实例ID: ${responseData.call_id}`);
         } else {
           const errorData = await response.json();
           this.$message.error(`调用失败: ${errorData.error.message}`);
@@ -309,7 +329,7 @@ export default {
       formData.append('id', file.id);
       formData.append('tag', file.tag);
 
-      await fetch(this.base_url + `/public/localWorkflow/${file.name}`, {
+      await fetch(this.base_url + `/storage/localWorkflow/${file.name}`, {
         method: 'PUT',
         body: formData,
       });
@@ -317,7 +337,7 @@ export default {
 
     async fetchFileList() {
       try {
-        const response = await fetch(this.base_url + '/public/localWorkflow');
+        const response = await fetch(this.base_url + '/storage/localWorkflow');
         const data = await response.json();
         // 按照 lastModified 进行降序排序
         data.sort((a, b) => {
@@ -332,7 +352,7 @@ export default {
 
     async editFile(file) {
       try {
-        const response = await fetch(`${this.base_url}/public/localWorkflow/${file.name}`);
+        const response = await fetch(`${this.base_url}/storage/localWorkflow/${file.name}`);
         const data = await response.json();
         this.$router.push({
           path: '/arrange',

@@ -22,9 +22,9 @@ app.use((req, res, next) => {
 app.use(express.json());
 
 // 添加静态资源中间件
-app.use(express.static('public'));
-app.use('/graphYamlData', express.static('public/graphYamlData'));
-app.use('/graphJsonData', express.static('public/graphJsonData'));
+app.use(express.static('storage'));
+app.use('/graphYamlData', express.static('storage/graphYamlData'));
+app.use('/graphJsonData', express.static('storage/graphJsonData'));
 
 //更新index
 async function updateIndexJson(folderPath, operation, fileInfo) {
@@ -57,7 +57,7 @@ async function updateIndexJson(folderPath, operation, fileInfo) {
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        cb(null, 'public/localWorkflow');
+        cb(null, 'storage/localWorkflow');
     },
     filename: (req, file, cb) => {
         cb(null, file.originalname);
@@ -70,7 +70,7 @@ const upload = multer({storage});
 app.put('/localWorkflow/:filename', upload.single('file'), async (req, res) => {
     try {
         console.log("Received file:", req.file);
-        await updateIndexJson(path.join(__dirname, 'public', 'localWorkflow'), 'add', {
+        await updateIndexJson(path.join(__dirname, 'storage', 'localWorkflow'), 'add', {
             name: req.params.filename,
             lastModified: new Date(),
             tag: 'undeployed',
@@ -85,7 +85,7 @@ app.put('/localWorkflow/:filename', upload.single('file'), async (req, res) => {
 
 // 处理文件检查请求
 app.head('/localWorkflow/:filename', (req, res) => {
-    const filePath = path.join(__dirname, 'public', 'localWorkflow', req.params.filename);
+    const filePath = path.join(__dirname, 'storage', 'localWorkflow', req.params.filename);
     fs.access(filePath, fs.constants.F_OK, (err) => {
         if (err) {
             res.sendStatus(404);
@@ -97,9 +97,9 @@ app.head('/localWorkflow/:filename', (req, res) => {
 
 
 // 添加或修改文件的路由
-app.put('/public/:folder/:filename', upload.single('file'), async (req, res) => {
+app.put('/storage/:folder/:filename', upload.single('file'), async (req, res) => {
     console.log("Received2 file:", req.file);
-    await updateIndexJson(path.join(__dirname, 'public', req.params.folder), 'update', {
+    await updateIndexJson(path.join(__dirname, 'storage', req.params.folder), 'update', {
         id: req.body.id,
         name: req.params.filename,
         lastModified: new Date(),
@@ -108,10 +108,10 @@ app.put('/public/:folder/:filename', upload.single('file'), async (req, res) => 
     res.sendStatus(200);
 });
 
-// 读取/public/localWorkflow下文件的路由
-app.get('/public/localWorkflow/:filename', async (req, res) => {
+// 读取/storage/localWorkflow下文件的路由
+app.get('/storage/localWorkflow/:filename', async (req, res) => {
   try {
-    const filePath = path.join(__dirname, 'public', 'localWorkflow', req.params.filename);
+    const filePath = path.join(__dirname, 'storage', 'localWorkflow', req.params.filename);
     const fileContent = await fs.promises.readFile(filePath, 'utf-8');
     res.send(fileContent);
   } catch (err) {
@@ -121,21 +121,21 @@ app.get('/public/localWorkflow/:filename', async (req, res) => {
 });
 
 // 删除文件的路由
-app.delete('/public/:folder/:filename', async (req, res) => {
-    const filePath = path.join(__dirname, 'public', req.params.folder, req.params.filename);
+app.delete('/storage/:folder/:filename', async (req, res) => {
+    const filePath = path.join(__dirname, 'storage', req.params.folder, req.params.filename);
     await fs.promises.unlink(filePath);
-    await updateIndexJson(path.join(__dirname, 'public', req.params.folder), 'delete', {
+    await updateIndexJson(path.join(__dirname, 'storage', req.params.folder), 'delete', {
         id: req.query.id,
     });
     res.sendStatus(200);
 });
 
 // 获取文件列表的路由
-app.get('/public/:folder', async (req, res) => {
+app.get('/storage/:folder', async (req, res) => {
     try {
         console.log(`Received request for folder: ${req.params.folder}`);
         if (req.params.folder === 'localWorkflow') {
-            const indexPath = path.join(__dirname, 'public', 'localWorkflow', 'index.json');
+            const indexPath = path.join(__dirname, 'storage', 'localWorkflow', 'index.json');
             const indexRawData = await fs.promises.readFile(indexPath, 'utf-8');
             const indexData = JSON.parse(indexRawData);
             console.log(indexData)

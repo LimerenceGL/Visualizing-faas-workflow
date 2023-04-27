@@ -6,19 +6,26 @@
       <div class="workflow-info">
         <div class="workflow-name">
           <span>工作流名称：</span>
-          <span>{{ model.workflow_name || "workflow1" }}</span>
+          <span>{{ model.instanceStatus.workflow  }}</span>
         </div>
 
         <!-- 工作流ID -->
         <div class="workflow-id">
           <span>ID：</span>
-          <span>{{ model.instance_id || "100000" }}</span>
+          <span>{{ model.instanceStatus.call_id }}</span>
         </div>
 
         <!-- 工作流执行状态 -->
         <div class="workflow-status">
           <span>执行状态：</span>
-          <span class="status-completed">{{ model.status||status }}</span>
+          <span :class="{
+            'status-completed': model.instanceStatus.status==='DONE',
+            'status-error':model.instanceStatus.status==='ERROR',
+            'status-executing':model.instanceStatus.status==='EXECUTING',
+          }">{{ model.instanceStatus.status }}</span>
+          <br>
+          <br>
+          <div v-if="model.instanceStatus.status === 'EXECUTING'" class="spinner"></div>
         </div>
       </div>
     </div>
@@ -40,17 +47,20 @@ export default {
       default: () => ({}),
     },
   },
-  data() {
-    return {
-      status: '执行完成',
-      checked: false
+  computed: {
+    statusClass() {
+      if (this.model.instanceStatus.status === 'DONE') {
+        return 'status-completed';
+      } else if (this.model.instanceStatus.status === 'ERROR') {
+        return 'status-error';
+      } else if (this.model.instanceStatus.status === 'EXECUTING') {
+        return 'status-executing';
+      }
+      return '';
     }
-  },
-
-
+  }
 }
 </script>
-
 <style scoped>
 .panelTitle {
   font-size: 16px;
@@ -71,7 +81,6 @@ export default {
 .workflow-status {
   margin-bottom: 15px;
   text-align: left;
-
 }
 
 .separator {
@@ -81,5 +90,32 @@ export default {
 
 .status-completed {
   color: green;
+}
+
+.status-error {
+  color: red;
+}
+
+.status-executing {
+  color: #9e9d24;
+}
+
+.spinner {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(0, 0, 0, 0.1);
+  border-left-color: black;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 </style>

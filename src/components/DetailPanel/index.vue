@@ -12,6 +12,8 @@
                         :onChange="onChange" :readOnly="readOnly"/>
       <ScriptTaskDetail v-else-if="model.clazz === 'scriptTask'" :model="model" :onChange="onChange"
                         :readOnly="readOnly"/>
+        <ReceiveTaskDetail v-else-if="model.clazz === 'receiveTask'" :model="model" :onChange="onChange"
+                           :readOnly="readOnly" />
       </el-scrollbar>
     </div>
 </template>
@@ -23,7 +25,7 @@ import GatewayDetail from "./GatewayDetail"
 import MailTaskDetail from "./MailTaskDetail"
 import TimerEventDetail from "./TimerEventDetail"
 import ScriptTaskDetail from "./ScriptTaskDetail"
-
+import ReceiveTaskDetail from "./ReceiveTaskDetail";
 export default {
   components: {
     ProcessDetail,
@@ -32,7 +34,8 @@ export default {
     GatewayDetail,
     MailTaskDetail,
     TimerEventDetail,
-    ScriptTaskDetail
+    ScriptTaskDetail,
+    ReceiveTaskDetail
   },
   props: {
     height: {

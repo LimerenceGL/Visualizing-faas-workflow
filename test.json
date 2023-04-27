@@ -1,0 +1,51 @@
+{
+  "instanceStatus": {
+    "call_id": "4aaf2874-a9c2-4759-b71f-22a859c8a457",
+    "workflow": "videoffmpeg",
+    "status": "EXECUTING",
+    "nodes": {
+      "foreachVideo": {
+        "status": "running",
+        "name": "foreachVideo",
+        "num": 1,
+        "finished_num": 0
+      },
+      "merge": {
+        "status": "pending",
+        "name": "merge",
+        "num": 1,
+        "finished_num": 0
+      },
+      "simple_process": {
+        "status": "pending",
+        "name": "simple_process",
+        "num": 1,
+        "finished_num": 0
+      },
+      "split": {
+        "status": "finished",
+        "name": "split",
+        "num": 1,
+        "finished_num": 1
+      },
+      "switch1": {
+        "status": "running",
+        "name": "switch1",
+        "num": 1,
+        "finished_num": 0
+      },
+      "transcode": {
+        "status": "finished",
+        "name": "transcode",
+        "num": 2,
+        "finished_num": 1
+      },
+      "upload": {
+        "status": "finished",
+        "name": "upload",
+        "num": 1,
+        "finished_num": 1
+      }
+    }
+  }
+}

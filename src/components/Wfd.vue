@@ -47,7 +47,7 @@ import registerShape from '../shape'
 import registerBehavior from '../behavior'
 import {downloadJSON, downloadYAML, generateGraphJson} from "../util/yamlGenerator";
 import IoPanel from "./IoPanel";
-
+import {useGraphStore} from "../stores/graphdata";
 registerShape(G6);
 registerBehavior(G6);
 export default {
@@ -95,6 +95,10 @@ export default {
     }
 
   },
+  setup() {
+    const graphStore = useGraphStore();
+    return {graphStore};
+  },
   data() {
     return {
       resizeFunc: () => {
@@ -129,15 +133,20 @@ export default {
         }
       }
     },
-    data(newData){
-      this.localData=newData
+    data(newData) {
+      this.localData = newData
     }
 
   },
   methods: {
     resetGraph() {
-      this.localData = {nodes: [], edges: [],combos:[],groups:[]};
+      this.localData = {nodes: [], edges: [], combos: [], groups: []};
+      if (this.graph) {
+        this.graph.clear();
+        this.graph.changeData(this.initShape(this.localData));
+      }
     },
+
 
     initShape(data) {
       if (data && data.nodes) {
@@ -276,7 +285,7 @@ export default {
       this.localData = newdata;
     },
     updateWorkflowName(newName) {
-      this.workflowName = newName;
+      this.$emit("updateWorkflowName", newName);
     },
 
   },
@@ -327,7 +336,7 @@ export default {
     //添加保存为需要的json格式功能
     this.graph.saveXML = (createFile = false) => exportXML(this.graph.save(), this.processModel, createFile);
     this.graph.saveImg = (createFile = true) => exportImg(this.$refs['canvas'], this.processModel.name, createFile);
-    this.graph.saveYAML = () => downloadYAML(this.graph.save())
+    this.graph.saveYAML = () => downloadYAML(this.graph.save(), this.workflowName)
     this.graph.saveJSON = () => downloadJSON(this.graph.save())
     this.graph.loadYAML = (content) => generateGraphJson(content)
 

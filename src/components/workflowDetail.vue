@@ -1,4 +1,4 @@
-<template >
+<template>
   <div class="detail-container">
     <el-row>
       <el-col :span="3">
@@ -7,9 +7,7 @@
       <el-col :span="3">
         <el-slider v-model="scale" :min="0.1" :max="2" :step="0.1" @change="onScaleChange"></el-slider>
       </el-col>
-      <el-col :span="3">
-        <el-button size="small" @click="clearNodeColors">模拟执行完成</el-button>
-      </el-col>
+
       <el-col :span="3">
         <el-button size="small"
                    @click="back">返回
@@ -24,7 +22,7 @@
       <div class="detail-panel-container">
         <!-- Add your custom div here -->
         <div>
-          <process-panel :model="model"></process-panel>
+          <process-panel :model="statusData"></process-panel>
         </div>
 
         <DetailPanel ref="detailPanel"
@@ -103,9 +101,12 @@ export default {
       selectedModel: {},
       graph: null,
       cmdPlugin: null,
-      model: {}
-
-
+      model: {},
+      edgeflow_base_url: 'http://133.133.133.53:8087',
+      workflowName: '',
+      callId: '',
+      statusData: null,
+      base_url: 'http://localhost:3000',
     };
   },
   methods: {
@@ -185,6 +186,15 @@ export default {
     back() {
       this.$router.go(-1)
     },
+    async getGraph() {
+      try {
+        const response = await fetch(`${this.base_url}/storage/localWorkflow/${this.workflowName}.json`);
+        this.data = await response.json();
+
+      } catch (error) {
+        console.error('Error fetching file content:', error);
+      }
+    },
     // 添加缩放方法
     onScaleChange(scale) {
       this.graph.zoomTo(scale);
@@ -202,22 +212,71 @@ export default {
         ranksep: 20,
       });
     },
-    clearNodeColors() {
-      const nodes = this.graph.getNodes();
-      // 将特定节点的颜色设置为绿色
-      const targetNodeIds = ['startNode', 'rand', 'switchcal', 'sqrt', 'endNode'];
-      nodes.forEach((node) => {
-        const model = node.getModel();
-        let defaultStyle = {fill: 'transparent', stroke: 'black'}; // 设置为默认样式或透明颜色，如：{fill: 'transparent'}
-
-        if (targetNodeIds.includes(model.id)) {
-
-          defaultStyle = {fill: '#d8f6be', stroke: 'black'};
-        }
-        this.graph.updateItem(node, {
-          style: defaultStyle,
+    async getInstanceStatus() {
+      try {
+        const response = await fetch(`${this.edgeflow_base_url}/workflow/status/${this.workflowName}/${this.callId}`, {
+          method: 'GET',
         });
-      });
+        if (response.ok) {
+          const responseData = await response.json();
+          console.log(responseData)
+          this.updateNodeColors(responseData);
+          this.statusData=responseData
+          // 判断是否需要继续请求状态
+          const {instanceStatus} = responseData;
+          if (instanceStatus && instanceStatus.status === "EXECUTING") {
+            // 每隔1秒再次获取执行状态
+            setTimeout(() => {
+              this.getInstanceStatus();
+            }, 1000);
+          }
+        }
+      } catch (error) {
+      }
+    },
+
+
+    updateNodeColors(statusData) {
+      if (!statusData || !statusData.instanceStatus || !statusData.instanceStatus.nodes) {
+        return;
+      }
+
+      const nodesStatus = statusData.instanceStatus.nodes;
+      const graphNodes = this.graph.getNodes();
+
+      for (const nodeName in nodesStatus) {
+        const nodeStatus = nodesStatus[nodeName];
+        const targetNode = graphNodes.find(node => node.getModel().id === nodeStatus.name);
+        if (!targetNode) {
+          continue;
+        }
+
+        let color;
+        switch (nodeStatus.status) {
+          case 'finished':
+            color = '#d8f6be';
+            break;
+          case 'error':
+            color = 'red';
+            break;
+          case 'running':
+            color ='#eff3af';
+            break;
+          case 'pending':
+            color ='transparent';
+            break;
+          default:
+            color = 'transparent';
+        }
+
+        this.graph.updateItem(targetNode, {
+          style: {
+            fill: color,
+            stroke: 'black',
+          },
+        });
+      }
+
       this.graph.refresh();
     },
 
@@ -249,16 +308,18 @@ export default {
   },
   mounted() {
     //根据id获取数据
-    const id = this.$route.params.id
-    const baseURL = '/graphYamlData/'
-    fetch(baseURL + id + '.yaml')
-        .then((response) => response.text()
-        ).then((data) => {
-      data = this.graph.loadYAML(data)
-      this.data = data
-      console.log(this.data)
-    });
-    // console.log(this.id); // 在这里可以使用传入的id
+    this.callId = this.$route.params.id
+    this.workflowName = this.$route.params.workflowName
+    this.getInstanceStatus()
+    // const baseURL = '/graphYamlData/'
+    // fetch(baseURL + this.callId + '.yaml')
+    //     .then((response) => response.text()
+    //     ).then((data) => {
+    //   data = this.graph.loadYAML(data)
+    //   this.data = data
+    //   console.log(this.data)
+    // });
+    this.getGraph()
     let plugins = [];
     const canvasPanel = new CanvasPanel({container: this.$refs['canvas']});
     plugins = [canvasPanel]

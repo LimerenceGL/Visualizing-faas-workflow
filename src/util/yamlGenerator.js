@@ -1,10 +1,10 @@
 import {downloadFile} from "./bpmn";
 import YAML from "js-yaml";
 
-export function downloadYAML(graph, DOWNLOAD = true) {
+export function downloadYAML(graph, workflowName, DOWNLOAD = true) {
 
     const YAML = require('js-yaml');
-    let jsonData = generateYAML_json(graph)
+    let jsonData = generateYAML_json(graph, workflowName)
     let yamlData = YAML.dump(jsonData)
     if (DOWNLOAD) {
         downloadFile(yamlData, 'application/yaml', 'config.yaml')
@@ -25,10 +25,10 @@ export function generateGraphJson(yamlData) {
     const YAML = require('js-yaml');
 
     let jsonData = YAML.load(yamlData)
-
+    const workflowName = jsonData['name']
     let startNode = {id: 'startNode', label: '', clazz: 'start',}
     let endNode = {id: 'endNode', label: '', clazz: 'end',}
-    if (Object.keys(jsonData['global_input']).length !== 0) {
+    if (jsonData.hasOwnProperty('global_input') && Object.keys(jsonData['global_input']).length !== 0) {
         let i = 0
         for (let inputName of Object.keys(jsonData['global_input'])) {
             i += 1
@@ -40,7 +40,7 @@ export function generateGraphJson(yamlData) {
         }
         startNode['inputCount'] = i
     }
-    if (Object.keys(jsonData['global_output']).length !== 0) {
+    if (jsonData.hasOwnProperty('global_output') && Object.keys(jsonData['global_output']).length !== 0) {
         let i = 0
         for (let outputName of Object.keys(jsonData['global_output'])) {
             i += 1
@@ -79,10 +79,11 @@ export function generateGraphJson(yamlData) {
     }
     let rst = {"nodes": nodes, "edges": edges}
 
-    return rst
+    return {rst, workflowName}
 }
 
-export function generateYAML_json(graph) {
+export function generateYAML_json(graph, workflowName) {
+    //将graph的json转化为工作流需要的json
     //Node包含全部信息
     let currentNode;
     //待遍历节点列表
@@ -128,7 +129,7 @@ export function generateYAML_json(graph) {
         if (currentNode['clazz'] !== 'start')
             steps.push(parseNode(currentNode, targetNodeList));
     }
-
+    result_json['name'] = workflowName
     result_json['global_input'] = parseGlobalInput(global_inputs)
     result_json['steps'] = steps
     result_json['global_output'] = parseGlobalOutput(global_outputs)
@@ -151,9 +152,9 @@ function parseGlobalInput(node) {
                 rst[currentInput]['size'] = get_prop(node, 'input' + i + 'size')
             }
         }
-    }catch (error) {
+    } catch (error) {
 
-      }
+    }
 
     return rst
 }
@@ -177,11 +178,13 @@ function parseGlobalOutput(node) {
 function parseNode(node, nextNodes) {
     let parseResult = {}
 
-    if (node['clazz'] === 'mailTask') {
-
+    if (node['clazz'] === 'mailTask')
         parseResult = parseTaskNode(node)
-    } else if (node['clazz'] === 'scriptTask')
+    else if (node['clazz'] === 'receiveTask')
+        parseResult = parseMergeNode(node)
+    else if (node['clazz'] === 'scriptTask')
         parseResult = parseForeachNode(node)
+
     else if (node['clazz'] === 'timerCatch')
         parseResult = parseParallelNode(node)
     else if (node['clazz'] === 'exclusiveGateway')
@@ -195,7 +198,7 @@ function parseNode(node, nextNodes) {
             }
         }
     }
-    if (parseResult['next'].length === 0) {
+    if (parseResult.hasOwnProperty('next') && parseResult['next'].length === 0) {
         delete parseResult['next']
     }
     return parseResult
@@ -206,6 +209,46 @@ function parseTaskNode(node) {
     let rst = {};
     rst['name'] = get_prop(node, 'label');
     rst['type'] = 'task';
+    rst['run'] = get_prop(node, 'run');
+    rst['runtime'] = get_prop(node, 'runtime', Number);
+    rst['mem_usage'] = get_prop(node, 'mem_usage', Number);
+    rst['scale'] = get_prop(node, 'scale', Number);
+    rst['requirement'] = {};
+    rst['requirement']['mem_req'] = get_prop(node, 'reqmem_req', Number);
+    rst['requirement']['gpu'] = get_prop(node, 'reqgpu') === 'true'
+    rst['inputs'] = {};
+    rst['outputs'] = {};
+
+    for (let i = 1; i <= 10; i++) {
+        if (node.hasOwnProperty('input' + i + 'name') && node['input' + i + 'name'] !== '') {
+            let currentInput = node['input' + i + 'name']
+            rst['inputs'][currentInput] = {}
+            rst['inputs'][currentInput]['type'] = get_prop(node, 'input' + i + 'task')
+            rst['inputs'][currentInput]['source'] = get_prop(node, 'input' + i + 'source')
+            rst['inputs'][currentInput]['size'] = get_prop(node, 'input' + i + 'size', Number)
+        }
+    }
+    if (Object.keys(rst.inputs).length === 0) {
+        delete rst['inputs']
+    }
+    for (let i = 1; i <= 10; i++) {
+        if (node.hasOwnProperty('output' + i + 'name') && node['output' + i + 'name'] !== '') {
+            let currentOutput = node['output' + i + 'name']
+            rst['outputs'][currentOutput] = {}
+            rst['outputs'][currentOutput]['type'] = get_prop(node, 'output' + i + 'task')
+            rst['outputs'][currentOutput]['size'] = get_prop(node, 'output' + i + 'size', Number)
+        }
+    }
+    if (Object.keys(rst.outputs).length === 0) {
+        delete rst['outputs']
+    }
+    return rst
+}
+
+function parseMergeNode(node) {
+    let rst = {};
+    rst['name'] = get_prop(node, 'label');
+    rst['type'] = 'merge';
     rst['run'] = get_prop(node, 'run');
     rst['runtime'] = get_prop(node, 'runtime', Number);
 
@@ -300,7 +343,8 @@ function add_node(oldnode) {
         "task": "mailTask",
         "switch": "exclusiveGateway",
         "parallel": "timerCatch",
-        "foreach": "scriptTask"
+        "foreach": "scriptTask",
+        "merge": "receiveTask"
     }
     let type = oldnode['type']
     let node = deepClone(oldnode)
@@ -311,7 +355,7 @@ function add_node(oldnode) {
     node['hideIcon'] = true
 
     //不同node处理
-    if (type === 'task') {
+    if (type === 'task' || type === 'merge') {
         //处理inputs outputs requirement
         if (node.hasOwnProperty('inputs')) {
             let i = 0
