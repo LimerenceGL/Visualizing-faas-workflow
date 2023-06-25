@@ -121,7 +121,7 @@ export default {
   name: "Manager",
   data() {
     return {
-      edgeflow_base_url: 'http://133.133.133.53:8087', // 后续填写实际的后端URL
+      edgeflow_base_url: 'http://133.133.135.8:31187', // 后续填写实际的后端URL
       tableData: [],
       filteredData: [],
       searchName: "",
@@ -130,7 +130,7 @@ export default {
       searchNodeCount: "",
       pageSize: 9,
       currentPage: 1,
-      base_url: 'http://localhost:3000',
+      base_url: 'http://133.133.134.87:3000',
     };
   },
   computed: {
@@ -143,52 +143,52 @@ export default {
   },
   methods: {
 
-
+    //
+    // // 跳转到详情页
+    // async goToDetail(name) {
+    //   try {
+    //     const response = await fetch(
+    //         `${this.edgeflow_base_url}/workflow/statuses/${name.replace(".json", "")}`
+    //     );
+    //
+    //     if (!response.ok) {
+    //       const errorData = await response.json();
+    //       // 处理404错误
+    //       if (errorData.error.code === 404) {
+    //         this.$message.error("工作流未找到");
+    //       }
+    //       // 处理其他错误
+    //       else {
+    //         this.$message.error("请求失败，请重试");
+    //       }
+    //       return;
+    //     }
+    //
+    //     const data = await response.json();
+    //
+    //     this.$router.push({
+    //       path: `/execute`,
+    //       query: {
+    //         workflowName: name.replace(".json", ""),
+    //         instances: JSON.stringify(data.statuses),
+    //       },
+    //     });
+    //   } catch (error) {
+    //     console.error(error);
+    //     this.$message.error("请求失败，请重试");
+    //   }
+    // },
     // 跳转到详情页
-    async goToDetail(name) {
-      try {
-        const response = await fetch(
-            `${this.edgeflow_base_url}/workflow/statuses/${name.replace(".json", "")}`
-        );
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          // 处理404错误
-          if (errorData.error.code === 404) {
-            this.$message.error("工作流未找到");
-          }
-          // 处理其他错误
-          else {
-            this.$message.error("请求失败，请重试");
-          }
-          return;
-        }
-
-        const data = await response.json();
-
+    goToDetail(name) {
         this.$router.push({
           path: `/execute`,
           query: {
             workflowName: name.replace(".json", ""),
-            instances: JSON.stringify(data.statuses),
           },
         });
-      } catch (error) {
-        console.error(error);
-        this.$message.error("请求失败，请重试");
-      }
+
     },
 
-
-
-    // goToDetail(name) {
-    //   this.$router.push({
-    //     path: `/execute`,
-    //     query: {
-    //       name: name.replace(".json", ""),
-    //     },
-    //   });
-    // },
 
     // 根据状态返回对应的文本
     tableStatusFormatter(status) {
@@ -255,6 +255,8 @@ export default {
         if (deployResponse.ok) {
           const updatedFile = {...file, tag: 'deployed'};
           await this.updateFile(updatedFile);
+          this.$message.success(`工作流 ${workflowName} 已成功部署`);
+
           setTimeout(() => {
             this.fetchFileList();
           }, 2000);
@@ -271,29 +273,37 @@ export default {
 
     async undeployFile(file) {
       try {
-        const undeployResponse = await fetch(`${this.edgeflow_base_url}/undeploy`, {
+        const workflowName = file.name.replace(/\.json$/, ''); // 去掉后缀作为workflowName
+        const undeployResponse = await fetch(`${this.edgeflow_base_url}/workflow/undeploy/${workflowName}`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({workflow_name: file.name}),
         });
 
-        if (undeployResponse.ok) {
+        if (undeployResponse.status === 200) {
           const updatedFile = {...file, tag: 'undeployed'};
           await this.updateFile(updatedFile);
+          this.$message.success(`工作流 ${workflowName} 已成功卸载`);
+
           setTimeout(() => {
             this.fetchFileList();
           }, 2000);
         } else {
-          const errorData = await undeployResponse.json();
-          this.$message.error(`卸载失败: ${errorData.error.message}`);
+          const contentType = undeployResponse.headers.get("content-type");
+          if (contentType && contentType.indexOf("application/json") !== -1) {
+            const errorData = await undeployResponse.json();
+            this.$message.error(`卸载失败: ${errorData.error.message}`);
+          } else {
+            this.$message.error('卸载请求失败');
+          }
         }
       } catch (error) {
         console.error('Error undeploying workflow:', error);
         this.$message.error('卸载请求失败');
       }
     },
+
 
     async invokeWorkflow(file) {
       if (file.tag !== 'deployed') {
@@ -354,12 +364,11 @@ export default {
       try {
         const response = await fetch(`${this.base_url}/storage/localWorkflow/${file.name}`);
         const data = await response.json();
+        this.$emit('updateData',JSON.stringify(data))
+        this.$emit('updateWorkflowName',file.name.replace(".json", ""))
         this.$router.push({
           path: '/arrange',
-          query: {
-            data: JSON.stringify(data),
-            filename: file.name.replace(".json", ""),
-          },
+
         });
       } catch (error) {
         console.error('Error fetching file content:', error);

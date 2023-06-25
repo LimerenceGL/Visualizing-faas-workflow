@@ -71,7 +71,7 @@ export default {
   props: {
     mode: {
       type: String,
-      default: "edit"
+      default: "default"
     },
     height: {
       type: Number,
@@ -102,11 +102,11 @@ export default {
       graph: null,
       cmdPlugin: null,
       model: {},
-      edgeflow_base_url: 'http://133.133.133.53:8087',
+      edgeflow_base_url: 'http://133.133.135.8:31187',
       workflowName: '',
       callId: '',
-      statusData: null,
-      base_url: 'http://localhost:3000',
+      statusData: {"instanceStatus":{}},
+      base_url: 'http://133.133.134.87:3000',
     };
   },
   methods: {
@@ -333,8 +333,8 @@ export default {
         default: ['drag-canvas', 'clickSelected'],
         //'drag-canvas':拖动画布
         view: [],
-        edit: ['hoverNodeActived', 'hoverAnchorActived',
-          'clickSelected', 'itemAlign', 'dragPoint', 'brush-select', 'drag-canvas'],
+        edit: [
+          'clickSelected',  'drag-canvas'],
       },
       defaultEdge: {
         shape: 'flow-polyline-round',
@@ -350,7 +350,7 @@ export default {
     this.graph.setMode(this.mode);
     this.graph.data(this.initShape(this.data));
     this.graph.render();
-    this.clearNodeColors()
+    // this.clearNodeColors()
     this.graph.fitView(5);
     this.initEvents();
 

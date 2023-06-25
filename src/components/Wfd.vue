@@ -47,7 +47,7 @@ import registerShape from '../shape'
 import registerBehavior from '../behavior'
 import {downloadJSON, downloadYAML, generateGraphJson} from "../util/yamlGenerator";
 import IoPanel from "./IoPanel";
-import {useGraphStore} from "../stores/graphdata";
+
 registerShape(G6);
 registerBehavior(G6);
 export default {
@@ -94,10 +94,6 @@ export default {
       default: ""
     }
 
-  },
-  setup() {
-    const graphStore = useGraphStore();
-    return {graphStore};
   },
   data() {
     return {

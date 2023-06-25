@@ -176,7 +176,7 @@ export default {
         });
         return;
       }
-      const filename = `http://localhost:3000/localWorkflow/${this.workflowName}.json`;
+      const filename = `http://133.133.134.87:3000/localWorkflow/${this.workflowName}.json`;
       try {
         // 检查文件是否已经存在
         const response = await axios.head(filename);

@@ -93,7 +93,7 @@ export default {
   name: "Execute",
   data() {
     return {
-      edgeflow_base_url: 'http://133.133.133.53:8087',
+      edgeflow_base_url: 'http://133.133.135.8:31187',
       workflow_name: "",
       tableData: [],
       filteredData: [],
@@ -104,7 +104,7 @@ export default {
       searchEndTime: "",
       pageSize: 9,
       currentPage: 1,
-      base_url: 'http://localhost:3000',
+      base_url: 'http://133.133.134.87:3000',
       timer: null,
     };
   },
@@ -148,39 +148,49 @@ export default {
         return matchName && matchId && matchStatus && matchStartTime && matchEndTime;
       });
     },
-    // fetchData() {
-    //   const name = this.$route.query.name;
-    //   this.workflow_name = name;
-    //
-    //   console.log(name)
-    //   // 使用 fetch 获取 API 数据
-    //   fetch(`${this.base_url}/api/workflow_instances?name=${name}`)
-    //       .then((response) => response.json())
-    //       .then((data) => {
-    //         this.tableData = data.instances;
-    //         this.filteredData = data.instances;
-    //       });
-    // },
-    fetchData() {
-      const name = this.$route.query.workflowName;
-      this.workflow_name = name;
 
-      const instances = JSON.parse(this.$route.query.instances);
-      this.tableData = instances.map(instance => ({
-        id: instance.call_id,
-        status: instance.status,
-        start_time: instance.start_time.substring(0, 19), // 修改为新数据格式的字段
-        end_time: instance.end_time.substring(0, 19), //
-        duration: this.calculateDuration(instance.start_time.substring(0, 19), instance.end_time.substring(0, 19))
-      }));
+    async fetchWorkflowData() {
+      try {
+        const response = await fetch(
+            `${this.edgeflow_base_url}/workflow/statuses/${this.workflow_name}`
+        );
 
-      // 按开始时间降序排序
-      this.tableData.sort((a, b) => {
-        return new Date(b.start_time) - new Date(a.start_time);
-      });
+        if (!response.ok) {
+          const errorData = await response.json();
+          // 处理404错误
+          if (errorData.error.code === 404) {
+            this.$message.error("工作流未找到");
+          }
+          // 处理其他错误
+          else {
+            this.$message.error("请求失败，请重试");
+          }
+          this.$router.go(-1); // 返回父组件
+          return;
+        }
 
-      this.filteredData = this.tableData;
+        const data = await response.json();
+        this.tableData = data.statuses.map(instance => ({
+          id: instance.call_id,
+          status: instance.status,
+          start_time: instance.start_time.substring(0, 19), // 修改为新数据格式的字段
+          end_time: instance.end_time.substring(0, 19), //
+          duration: this.calculateDuration(instance.start_time.substring(0, 19), instance.end_time.substring(0, 19))
+        }));
+
+        // 按开始时间降序排序
+        this.tableData.sort((a, b) => {
+          return new Date(b.start_time) - new Date(a.start_time);
+        });
+
+        this.filteredData = this.tableData;
+      } catch (error) {
+        console.error(error);
+        this.$message.error("请求失败，请重试");
+        this.$router.go(-1); // 返回父组件
+      }
     },
+
     async checkExecutingStatus() {
       // 检查是否存在执行状态为 EXECUTING 的实例
       const hasExecutingInstance = this.tableData.some(
@@ -210,7 +220,7 @@ export default {
               (item) => item.call_id === instance.id
           );
 
-          if (updatedInstance) {
+          if (updatedInstance && updatedInstance.status !== "EXECUTING") {
             return {
               ...instance,
               status: updatedInstance.status,
@@ -230,6 +240,7 @@ export default {
         console.error(error);
       }
     },
+
 
     calculateDuration(startTime, endTime) {
       const startDate = new Date(startTime);
@@ -271,20 +282,14 @@ export default {
     },
 
   },
-  mounted() {
-    this.fetchData();
-        this.timer = setInterval(() => {
+  async mounted() {
+    // this.fetchData();
+    const name = this.$route.query.workflowName;
+    this.workflow_name = name;
+    await this.fetchWorkflowData();
+    this.timer = setInterval(() => {
       this.checkExecutingStatus();
     }, 3000);
-    // 从json文件中获取数据
-    // fetch('/data.json')
-    //     .then((response) => response.json()
-    //     ).then((data) => {
-    //   this.workflow_name = data.workflow_name;
-    //   this.tableData = data.instances;
-    //   this.filteredData = data.instances;
-    // });
-
   },
   // 当组件被销毁时，清除定时器
   beforeDestroy() {

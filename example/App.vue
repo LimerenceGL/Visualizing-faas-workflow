@@ -7,15 +7,16 @@
       </el-col>
       <el-col :span="21">
         <router-view name="execute"></router-view>
-        <router-view name="manager"></router-view>
+        <router-view name="manager" @updateData="updateDataFromJson" @updateWorkflowName="updateWorkflowName"></router-view>
         <router-view name="workflowDetail"></router-view>
         <router-view name="elementui"></router-view>
         <keep-alive>
-          <router-view name="Wfd" ref="wfd" :height="containerHeight" :lang="lang" :data="this.jsonFromFile"
+
+          <router-view name="Wfd" ref="wfd" :height="containerHeight" :lang="lang" :data="this.data"
                        :layout="layout" @update-layout="updateLayout" @update:data="updateDataFromChild"
                        :workflowName="workflowName" @updateWorkflowName="updateWorkflowName"></router-view>
         </keep-alive>
-        <!--        <wfd-vue ref="wfd" :height="600" :lang="lang" :data="this.jsonFromFile" :layout="layout"-->
+        <!--        <wfd-vue ref="wfd" :height="600" :lang="lang" :data="this.data" :layout="layout"-->
         <!--             @update-layout="updateLayout"/>-->
 
 
@@ -56,7 +57,7 @@ export default {
       layout: true,
       containerHeight: 800,
 
-      jsonFromFile: {"nodes": [], "edges": [], "combos": [], "groups": []},
+      data: {"nodes": [], "edges": [], "combos": [], "groups": []},
       RealtimeData: null,
       workflowName: ""
     }
@@ -75,9 +76,9 @@ export default {
       reader.addEventListener('load', event => {
         let content = event.target.result;
         if (fileType === "yaml" || fileType === "yml") {
-          this.jsonFromFile = this.$refs['wfd'].graph.loadYAML(content)
+          this.data = this.$refs['wfd'].graph.loadYAML(content)
         } else if (fileType === "json") {
-          this.jsonFromFile = JSON.parse(content)
+          this.data = JSON.parse(content)
         }
 
       });
@@ -89,7 +90,10 @@ export default {
     },
 
     updateDataFromChild(newData) {
-      this.jsonFromFile = newData;
+      this.data = newData;
+    },
+    updateDataFromJson(newData){
+      this.data = JSON.parse(newData)
     },
     clickFile() {
       document.getElementById('datafile').addEventListener('change', this.readInputFile, false);
@@ -110,15 +114,7 @@ export default {
       }
     },
 
-    changeColor() {
-      const node = this.$refs['wfd'].graph.findById('invalid');
-      node.update({
-        style: {
-          fill: '#D3D3D3',
-          stroke: '#BEBEBE',
-        },
-      });
-    },
+
     updateLayout(newValue) {
       this.layout = newValue;
     },
@@ -129,13 +125,7 @@ export default {
   mounted() {
     this.updateContainerHeight();
     window.addEventListener('resize', this.updateContainerHeight);
-    this.$router.afterEach((to, from) => {
-      if (to.path === '/arrange' && from.path === '/manager' && to.query.filename) {
-        console.log('to.name:', to.query.filename)
-        this.workflowName = to.query.filename
-        this.jsonFromFile = JSON.parse(to.query.data);
-      }
-    });
+
   },
   beforeDestroy() {
     window.removeEventListener('resize', this.updateContainerHeight);

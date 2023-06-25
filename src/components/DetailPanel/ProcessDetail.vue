@@ -1,12 +1,12 @@
 <template>
-  <div >
+  <div>
     <div class="panelTitle">工作流信息</div>
     <div class="panelBody">
       <!-- 工作流名称 -->
       <div class="workflow-info">
         <div class="workflow-name">
           <span>工作流名称：</span>
-          <span>{{ model.instanceStatus.workflow  }}</span>
+          <span>{{ model.instanceStatus.workflow }}</span>
         </div>
 
         <!-- 工作流ID -->
@@ -49,6 +49,9 @@ export default {
   },
   computed: {
     statusClass() {
+      if (!this.model || !this.model.instanceStatus) {
+        return '';
+      }
       if (this.model.instanceStatus.status === 'DONE') {
         return 'status-completed';
       } else if (this.model.instanceStatus.status === 'ERROR') {
@@ -59,6 +62,7 @@ export default {
       return '';
     }
   }
+
 }
 </script>
 <style scoped>
